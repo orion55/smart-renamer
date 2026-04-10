@@ -1,0 +1,1 @@
+Сделай код ревью с помощью security-reviewer и учти в этом: $ARGUMENTS

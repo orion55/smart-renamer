@@ -1,0 +1,36 @@
+{
+  "name": "smart-renamer",
+  "version": "1.0.0",
+  "description": "CLI utility for automatic renaming and translating of media files",
+  "main": "dist/index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "rimraf dist && ncc build src/index.ts -o dist -m",
+    "lint": "biome lint ./src",
+    "format": "biome format --write ./src",
+    "check": "biome check --write ./src"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ansi-colors": "^4.1.3",
+    "cfonts": "^3.3.0",
+    "dotenv": "^16.5.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "yaml": "^2.7.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.15.2",
+    "@vercel/ncc": "^0.38.3",
+    "tsx": "^4.19.3",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  }
+}
