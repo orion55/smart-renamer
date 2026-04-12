@@ -62,10 +62,10 @@ npm install openai p-limit@^4
 Добавить:
 ```env
 YANDEX_API_KEY=        # API-ключ Yandex Cloud
-YANDEX_PROJECT_ID=     # ID папки/проекта Yandex Cloud
-YANDEX_PROMPT_ID=      # ID сохранённого промпта в Yandex Cloud
 IN_DIR=                # Входная директория (например f:\Сериалы)
 ```
+
+`YANDEX_PROJECT_ID` и `YANDEX_PROMPT_ID` — **не нужны**: folder ID и prompt ID захардкожены в `gpt.service.ts`.
 
 **Зависит от**: ничего
 
@@ -224,8 +224,10 @@ class GptService {
 }
 ```
 
-- OpenAI SDK с `baseURL` + заголовок `OpenAI-Project: YANDEX_PROJECT_ID`
-- `YANDEX_PROMPT_ID` как ID сохранённого промпта
+- OpenAI SDK с `baseURL: 'https://ai.api.cloud.yandex.net/v1'`
+- Заголовок `OpenAI-Project` — hardcoded folder ID
+- `prompt.id` — hardcoded saved prompt ID
+- Метод: `client.responses.create({ prompt: { id }, input })`
 - Конкурентность: `p-limit(3)` — максимум 3 параллельных запроса (решение #3)
 - Retry: exponential backoff 1s/2s/4s, максимум 3 попытки (R9)
 - После исчерпания попыток: логировать ошибку, вернуть `null`, продолжить работу
