@@ -2,11 +2,7 @@ import * as dotenv from 'dotenv';
 import { resolveInDir } from './helpers/env';
 import { printSmartRenamer } from './helpers/greeting';
 import { logger } from './logger.service';
-import {
-  processFolders,
-  scanDirectory,
-  scanFiles
-} from './scanner/scanner.service';
+import { processFolders, scanDirectory, scanFiles } from './scanner/scanner.service';
 import type { MediaFile, MediaFolder } from './types';
 
 dotenv.config();
