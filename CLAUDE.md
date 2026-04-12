@@ -33,6 +33,9 @@ Node built-in imports must use the `node:` protocol (enforced by Biome): `import
 
 Single quotes, semicolons, 2-space indent, line width 100, trailing commas. Run `npm run check` before committing.
 
+- **Arrow functions only** — use `const foo = () => {}` everywhere; `function` declarations are forbidden.
+- **No single-letter variables** — all identifiers must be descriptive (e.g. `entry`, not `e`; `error`, not `err`).
+
 ### Environment
 
 Copy `.env.example` to `.env`. Only `LOG_DIR` is currently used (defaults to `<root>/logs`).
@@ -40,3 +43,16 @@ Copy `.env.example` to `.env`. Only `LOG_DIR` is currently used (defaults to `<r
 ### Build output
 
 `ncc` bundles everything into a single `dist/index.js` with minification (`-m` flag). The `dist/` folder is wiped before each build via `rimraf`.
+
+---
+
+## MCP Servers
+
+| Сервер | Префикс инструментов | Назначение |
+|---|---|---|
+| **context7** | `mcp__context7__*` | Актуальная документация библиотек — использовать перед работой с любым SDK/API |
+| **filesystem** | `mcp__filesystem__*` | Расширенные файловые операции (дерево директорий, перемещение, размеры) |
+| **ide** | `mcp__ide__*` | Интеграция с IDE: диагностика TypeScript/Biome ошибок |
+| **memory** | `mcp__memory__*` | Граф знаний: сущности, связи, наблюдения между сессиями |
+| **playwright** | `mcp__playwright__*` | Автоматизация браузера: навигация, скриншоты, клики, заполнение форм |
+| **sequential-thinking** | `mcp__sequential-thinking__*` | Структурированное пошаговое мышление для сложных задач |
