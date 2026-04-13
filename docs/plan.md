@@ -2,14 +2,20 @@
 
 ## Что уже готово (DONE)
 
+> Последнее обновление: 2026-04-13 (GROUP 3 ✅)
+
 | Файл | Статус | Примечания |
 |---|---|---|
-| `src/index.ts` | DONE (скелет) | Баннер + лог старта; нужна оркестрация |
-| `src/logger.service.ts` | DONE | Winston + DailyRotateFile, полностью работает |
-| `src/helpers/greeting.ts` | DONE | cfonts баннер |
-| `appDir.ts` | DONE | Экспорт `ROOT_DIR` |
-| `tsconfig.json` | DONE | Strict CommonJS, ES2020 |
-| `package.json` | DONE (частично) | Не хватает: `openai`, `p-limit` |
+| `src/index.ts` | 🔶 PARTIAL | Баннер + сканер подключён; GROUP 4–7 — TODO-заглушки |
+| `src/logger.service.ts` | ✅ DONE | Winston + DailyRotateFile, полностью работает |
+| `src/helpers/greeting.ts` | ✅ DONE | cfonts баннер |
+| `src/helpers/env.ts` | ✅ DONE | `resolveInDir()` — валидация `IN_DIR` из `.env` |
+| `appDir.ts` | ✅ DONE | Экспорт `ROOT_DIR` |
+| `tsconfig.json` | ✅ DONE | Strict CommonJS, ES2020 |
+| `package.json` | ❓ | Наличие `openai` и `p-limit@^4` не проверено |
+| `src/types.ts` | ✅ DONE | Все 4 интерфейса + вспомогательные типы (T1) |
+| `src/helpers/patterns.ts` | ✅ DONE | Все 8 паттернов + VIDEO_EXTENSIONS, TRANSLIT_PATTERN, CYRILLIC, LATIN (T2) |
+| `src/scanner/scanner.service.ts` | ✅ DONE | scanDirectory, scanFiles, getVideoFiles, deleteJunkFiles, flattenSubfolders, processFolders (T3) |
 
 ---
 
@@ -359,22 +365,22 @@ class StatsTracker {
 
 ## Сводная таблица задач
 
-| Задача | Файл | Приоритет | Сложность |
-|---|---|---|---|
-| T0-A | `package.json` | P0 | Small |
-| T0-B | `.env.example` | P0 | Small |
-| T1 | `src/types.ts` | P0 | Small |
-| T2 | `src/helpers/patterns.ts` | P0 | Medium |
-| T3 | `src/scanner/scanner.service.ts` | P0 | Medium |
-| T4 | `src/classifier/classifier.service.ts` | P0 | Large |
-| T5-A | `src/gpt/prompt.builder.ts` | P0 | Medium |
-| T5-B | `src/gpt/response.parser.ts` | P0 | Small |
-| T5-C | `src/gpt/gpt.service.ts` | P0 | Medium |
-| T6-A | `src/renamer/conflict.resolver.ts` | P0 | Small |
-| T6-B | `src/renamer/renamer.service.ts` | P0 | Large |
-| T7 | `src/index.ts` | P0 | Large |
-| T8 | `src/stats.ts` | P1 | Small |
-| T9 | `src/helpers/progress.ts` | P2 | Small |
+| Задача | Файл | Приоритет | Сложность | Статус |
+|---|---|---|---|---|
+| T0-A | `package.json` | P0 | Small | ❓ не проверено |
+| T0-B | `.env.example` | P0 | Small | ❓ не проверено |
+| T1 | `src/types.ts` | P0 | Small | ✅ DONE |
+| T2 | `src/helpers/patterns.ts` | P0 | Medium | ✅ DONE |
+| T3 | `src/scanner/scanner.service.ts` | P0 | Medium | ✅ DONE |
+| T4 | `src/classifier/classifier.service.ts` | P0 | Large | ✅ DONE |
+| T5-A | `src/gpt/prompt.builder.ts` | P0 | Medium | ❌ TODO |
+| T5-B | `src/gpt/response.parser.ts` | P0 | Small | ❌ TODO |
+| T5-C | `src/gpt/gpt.service.ts` | P0 | Medium | ❌ TODO |
+| T6-A | `src/renamer/conflict.resolver.ts` | P0 | Small | ❌ TODO |
+| T6-B | `src/renamer/renamer.service.ts` | P0 | Large | ❌ TODO |
+| T7 | `src/index.ts` | P0 | Large | 🔶 PARTIAL |
+| T8 | `src/stats.ts` | P1 | Small | ❌ TODO |
+| T9 | `src/helpers/progress.ts` | P2 | Small | ❌ TODO |
 
 ---
 

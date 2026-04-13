@@ -18,7 +18,7 @@ This is a Node.js/TypeScript CLI utility that rewrites the PowerShell script in 
 
 ### Key files
 
-- `src/index.ts` — entry point: prints banner, starts logger, orchestrates everything
+- `src/index.ts` — entry point: prints banner, starts logger, orchestrates everything. **Правило**: файл содержит только однострочные вызовы функций и объекты для передачи данных между ними. Никакой бизнес-логики — любые условия, циклы, преобразования выносятся в отдельные сервисы.
 - `src/logger.service.ts` — winston logger with daily-rotate-file; reads `LOG_DIR` from `.env`
 - `src/helpers/greeting.ts` — cfonts ASCII banner
 - `appDir.ts` — exports `ROOT_DIR` (`__dirname` of project root); imported by logger
