@@ -27,7 +27,6 @@ logger.info(`Found ${looseFiles.length} loose video file(s) in root`);
 // ── GROUP 3: Classify ────────────────────────────────────────────────────────
 
 const { foldersForGpt, filesForGpt } = buildGptQueue(folders, looseFiles);
-console.log(foldersForGpt, filesForGpt);
 
 // ── TODO GROUP 4: GPT translation ────────────────────────────────────────────
 // ── TODO GROUP 5: rename ─────────────────────────────────────────────────────

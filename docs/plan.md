@@ -187,18 +187,37 @@ interface ProcessingResult {
 
 ## GROUP 4 — GPT интеграция
 
+> **Статус инфраструктуры**: AI-агент полностью настроен на стороне Яндекс Облака.
+> Системный промпт, правила и примеры уже зашиты в сохранённый промпт с ID `fvt96p8c9pf0412en1is`.
+> Наша задача — только сформировать входные данные и разобрать ответ.
+
 ### T5-A: Prompt builder
-**Приоритет**: P0 | **Сложность**: Medium
+**Приоритет**: P0 | **Сложность**: Small  *(упрощено: системный промпт уже на стороне агента)*
 **Файл**: `src/gpt/prompt.builder.ts` (новый)
 
-Три шаблона промптов (решение #1 — отдельный промпт на каждый сценарий):
-- `FOREIGN_PROMPT` — перевести на официальное русское название (Кинопоиск), удалить мусор
-- `TRANSLIT_PROMPT` — восстановить кириллицу из транслитерации, удалить мусор
-- `CLEAN_RUSSIAN_PROMPT` — только удалить технический мусор из уже русского названия
+Агент ожидает в поле `input` JSON-строку — массив объектов с полями `type` и `name`.
+Системный промпт на сервере уже содержит инструкции для каждого типа:
+- `foreign` — перевести на официальное русское название (Кинопоиск), удалить мусор
+- `translit` — восстановить кириллицу из транслитерации, удалить мусор
+- `cleanRussian` — только удалить технический мусор из уже русского названия
 
-Формат ответа GPT: JSON-массив чистых названий, один элемент на входное имя, без пояснений.
+`buildBatchInput(entries: Array<{ type: GPTScenario, name: string }>): string`
+- Сериализует массив в `JSON.stringify` — это и есть `input` для `client.responses.create`
+- Батч до 50 записей (решение #2)
 
-`buildBatchPrompt(names: string[], scenario): string` — батч до 50 имён (решение #2).
+Пример результата функции (это строка, которая идёт в `input`):
+```json
+[
+  { "type": "foreign",      "name": "Breaking.Bad.S01E01.720p.BluRay.x264-SiNNERS" },
+  { "type": "translit",     "name": "Brigada.S01.DVDRip" },
+  { "type": "cleanRussian", "name": "Слово пацана 1080p WEB-DL x265 Кровь на асфальте" }
+]
+```
+
+Агент вернёт `response.output_text` — JSON-массив строк, по одной на каждый вход:
+```json
+["Во все тяжкие", "Бригада", "Слово пацана. Кровь на асфальте"]
+```
 
 **Зависит от**: T1
 
@@ -208,11 +227,12 @@ interface ProcessingResult {
 **Приоритет**: P0 | **Сложность**: Small
 **Файл**: `src/gpt/response.parser.ts` (новый)
 
-`parseResponse(rawText, inputCount): string[]`
-- Удалить markdown code fences
+`parseResponse(rawText: string, inputCount: number): string[]`
+- Входные данные — `response.output_text` из ответа агента
+- Удалить markdown code fences (агент может обернуть ответ в ```json ... ```)
 - Извлечь JSON-массив regex'ом, затем `JSON.parse`
 - Проверить длину == `inputCount`
-- При ошибке парсинга или несовпадении длины — вернуть `null[]`
+- При ошибке парсинга или несовпадении длины — вернуть массив `null` нужной длины
 
 **Зависит от**: T1
 
@@ -222,21 +242,43 @@ interface ProcessingResult {
 **Приоритет**: P0 | **Сложность**: Medium
 **Файл**: `src/gpt/gpt.service.ts` (новый)
 
+Интеграция с Yandex Cloud AI через OpenAI-совместимый SDK.
+Агент и промпт уже настроены на стороне Яндекса — передаём только данные.
+
+**Константы (hardcoded)**:
+- `YANDEX_BASE_URL = 'https://ai.api.cloud.yandex.net/v1'`
+- `YANDEX_FOLDER_ID = 'b1ge1vr81g330igour00'`  → заголовок `OpenAI-Project`
+- `YANDEX_PROMPT_ID = 'fvt96p8c9pf0412en1is'`  → ID сохранённого промпта агента
+
+**Пример вызова API**:
 ```typescript
-class GptService {
-  private client: OpenAI  // baseURL = 'https://ai.api.cloud.yandex.net/v1'
-  translateBatch(names: string[], scenario): Promise<string[]>
-  private callWithRetry(prompt, input, attempt): Promise<string>
-}
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+  apiKey: process.env.YANDEX_API_KEY,
+  baseURL: 'https://ai.api.cloud.yandex.net/v1',
+  defaultHeaders: {
+    'OpenAI-Project': 'b1ge1vr81g330igour00',
+  },
+});
+
+const response = await client.responses.create({
+  prompt: { id: 'fvt96p8c9pf0412en1is' },
+  input: buildBatchInput(entries),   // JSON-строка от T5-A
+});
+
+const rawText = response.output_text; // строка → парсим через T5-B
 ```
 
-- OpenAI SDK с `baseURL: 'https://ai.api.cloud.yandex.net/v1'`
-- Заголовок `OpenAI-Project` — hardcoded folder ID
-- `prompt.id` — hardcoded saved prompt ID
-- Метод: `client.responses.create({ prompt: { id }, input })`
-- Конкурентность: `p-limit(3)` — максимум 3 параллельных запроса (решение #3)
-- Retry: exponential backoff 1s/2s/4s, максимум 3 попытки (R9)
-- После исчерпания попыток: логировать ошибку, вернуть `null`, продолжить работу
+**Структура сервиса**:
+```typescript
+const translateBatch = (entries: GptEntry[]): Promise<string[]>
+const callWithRetry = (input: string, attempt: number): Promise<string>
+```
+
+- Конкурентность: `p-limit(3)` — максимум 3 параллельных запроса
+- Retry: exponential backoff 1 с / 2 с / 4 с, максимум 3 попытки
+- После исчерпания попыток: логировать ошибку, вернуть массив `null` нужной длины, продолжить
 
 **Зависит от**: T0-A, T5-A, T5-B
 
@@ -395,4 +437,4 @@ class StatsTracker {
 | R5 | Конфликт при подъёме фильма: файл с таким именем уже есть в `IN_DIR` | Средняя |
 | R6 | Единообразие 2/4 цифр: формат определять до начала переименования, не в процессе | Средняя |
 | R7 | GPT недетерминирован: парсер должен быть устойчив к markdown-обёрткам вокруг JSON | Низкая |
-| R8 | `YANDEX_PROMPT_ID` обязателен: нужен fallback с инлайн-промптом если не задан | Низкая |
+| R8 | `YANDEX_PROMPT_ID` захардкожен (`fvt96p8c9pf0412en1is`); fallback не нужен — агент настроен на стороне Яндекса | Снят |
