@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import { buildGptQueue } from './classifier/classifier.service';
+import { applyTranslations } from './gpt/gpt.service';
 import { resolveInDir } from './helpers/env';
 import { printSmartRenamer } from './helpers/greeting';
 import { logger } from './logger.service';
@@ -9,25 +10,32 @@ dotenv.config();
 
 printSmartRenamer();
 
-logger.info('SmartRenamer started');
+void (async () => {
+  logger.info('SmartRenamer started');
 
-const inDir = resolveInDir();
-logger.info(`Input directory: ${inDir}`);
+  const inDir = resolveInDir();
+  logger.info(`Input directory: ${inDir}`);
 
-// ── GROUP 2: Scanner ─────────────────────────────────────────────────────────
+  // ── GROUP 2: Scanner ─────────────────────────────────────────────────────────
 
-const folders = scanDirectory(inDir);
-logger.info(`Found ${folders.length} folder(s) in ${inDir}`);
+  const folders = scanDirectory(inDir);
+  logger.info(`Found ${folders.length} folder(s) in ${inDir}`);
 
-processFolders(folders);
+  processFolders(folders);
 
-const looseFiles = scanFiles(inDir);
-logger.info(`Found ${looseFiles.length} loose video file(s) in root`);
+  const looseFiles = scanFiles(inDir);
+  logger.info(`Found ${looseFiles.length} loose video file(s) in root`);
 
-// ── GROUP 3: Classify ────────────────────────────────────────────────────────
+  // ── GROUP 3: Classify ────────────────────────────────────────────────────────
 
-const { foldersForGpt, filesForGpt } = buildGptQueue(folders, looseFiles);
+  const { foldersForGpt, filesForGpt } = buildGptQueue(folders, looseFiles);
 
-// ── TODO GROUP 4: GPT translation ────────────────────────────────────────────
-// ── TODO GROUP 5: rename ─────────────────────────────────────────────────────
-// ── TODO GROUP 7: print summary ──────────────────────────────────────────────
+  // ── GROUP 4: GPT translation ─────────────────────────────────────────────────
+
+  const translations = await applyTranslations([...foldersForGpt, ...filesForGpt]);
+  console.log({ translations });
+
+  // ── TODO GROUP 5: rename ─────────────────────────────────────────────────────
+  // renameAll(folders, looseFiles, translations)
+  // ── TODO GROUP 7: print summary ──────────────────────────────────────────────
+})();

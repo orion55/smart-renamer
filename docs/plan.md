@@ -2,7 +2,7 @@
 
 ## Что уже готово (DONE)
 
-> Последнее обновление: 2026-04-13 (GROUP 3 ✅)
+> Последнее обновление: 2026-04-13 (GROUP 4 ✅)
 
 | Файл | Статус | Примечания |
 |---|---|---|
@@ -415,9 +415,9 @@ class StatsTracker {
 | T2 | `src/helpers/patterns.ts` | P0 | Medium | ✅ DONE |
 | T3 | `src/scanner/scanner.service.ts` | P0 | Medium | ✅ DONE |
 | T4 | `src/classifier/classifier.service.ts` | P0 | Large | ✅ DONE |
-| T5-A | `src/gpt/prompt.builder.ts` | P0 | Medium | ❌ TODO |
-| T5-B | `src/gpt/response.parser.ts` | P0 | Small | ❌ TODO |
-| T5-C | `src/gpt/gpt.service.ts` | P0 | Medium | ❌ TODO |
+| T5-A | `src/gpt/prompt.builder.ts` | P0 | Medium | ✅ DONE |
+| T5-B | `src/gpt/response.parser.ts` | P0 | Small | ✅ DONE |
+| T5-C | `src/gpt/gpt.service.ts` | P0 | Medium | ✅ DONE |
 | T6-A | `src/renamer/conflict.resolver.ts` | P0 | Small | ❌ TODO |
 | T6-B | `src/renamer/renamer.service.ts` | P0 | Large | ❌ TODO |
 | T7 | `src/index.ts` | P0 | Large | 🔶 PARTIAL |
