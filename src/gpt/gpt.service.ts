@@ -1,9 +1,11 @@
 import OpenAI from 'openai';
-import pLimit from 'p-limit';
 import { logger } from '../logger.service';
 import {
   BATCH_SIZE,
-  CONCURRENCY,
+  CONTEXT_LIMIT_MESSAGE,
+  INPUT_TOKENS_LIMIT_PATTERN,
+  MAX_BATCH_CHARS,
+  MAX_OUTPUT_TOKENS,
   MAX_RETRIES,
   YANDEX_BASE_URL,
   YANDEX_FOLDER_ID,
@@ -32,18 +34,65 @@ const client = new OpenAI({
 const yandexCreate = (params: YandexCreateParams): Promise<YandexCreateResult> =>
   client.responses.create(params as never) as unknown as Promise<YandexCreateResult>;
 
-const limit = pLimit(CONCURRENCY);
+
+const getErrorMeta = (error: unknown) => {
+  if (error instanceof GptSoftError) {
+    return { code: error.code, details: error.message };
+  }
+
+  if (error instanceof OpenAI.APIError) {
+    return {
+      code: error.code ?? 'api_error',
+      details: error.message,
+      status: error.status,
+      type: error.type,
+    };
+  }
+
+  return { details: String(error) };
+};
+
+const isContextLimitError = (error: unknown): boolean => {
+  if (error instanceof GptSoftError) {
+    return error.code === 'model_call_error' && isProviderOversizeMessage(error.message);
+  }
+
+  return error instanceof OpenAI.APIError && isProviderOversizeMessage(error.message);
+};
+
+const isProviderOversizeMessage = (message: string): boolean => {
+  const normalizedMessage = message.toLowerCase();
+  return (
+    normalizedMessage.includes(CONTEXT_LIMIT_MESSAGE) || INPUT_TOKENS_LIMIT_PATTERN.test(message)
+  );
+};
 
 const callYandex = async (input: string): Promise<string> => {
-  const response = await yandexCreate({ prompt: { id: YANDEX_PROMPT_ID }, input });
-  if (response.status === 'failed' || !response.valid) {
+  const response = await yandexCreate({
+    prompt: { id: YANDEX_PROMPT_ID },
+    input,
+    max_output_tokens: MAX_OUTPUT_TOKENS,
+  });
+
+  if (response.status === 'failed') {
     const apiError = response.error ?? { code: 'unknown', message: 'no error details' };
+    logger.warn(`GPT failed: ${apiError.code} — ${apiError.message}`, { responseId: response.id });
     throw new GptSoftError(
       apiError.message,
       apiError.code,
       !NON_RETRYABLE_CODES.has(apiError.code),
     );
   }
+
+  if (response.output_text.length === 0) {
+    const apiError = response.error ?? {
+      code: 'empty_output',
+      message: 'Provider returned empty output_text',
+    };
+    logger.warn('GPT empty output', { responseId: response.id, status: response.status });
+    throw new GptSoftError(apiError.message, apiError.code, true);
+  }
+
   return response.output_text;
 };
 
@@ -55,15 +104,11 @@ const callWithRetry = async (input: string, attempt = 0): Promise<string> => {
     const isExhausted = attempt >= MAX_RETRIES - 1;
 
     if (isNonRetryable || isExhausted) {
-      const meta =
-        error instanceof GptSoftError
-          ? { code: error.code, message: error.message }
-          : { message: error instanceof OpenAI.APIError ? error.message : String(error) };
       logger.error(
         isNonRetryable
           ? `GPT request failed (non-retryable: ${(error as GptSoftError).code})`
           : `GPT request failed after ${MAX_RETRIES} attempts`,
-        meta,
+        getErrorMeta(error),
       );
       throw error;
     }
@@ -72,6 +117,41 @@ const callWithRetry = async (input: string, attempt = 0): Promise<string> => {
     logger.warn(`GPT attempt ${attempt + 1}/${MAX_RETRIES} failed, retry in ${delayMs}ms`);
     await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
     return callWithRetry(input, attempt + 1);
+  }
+};
+
+const getBatchMetrics = (batch: BatchInputEntry[]) => {
+  const nameLengths = batch.map((entry) => entry.name.length);
+  const inputChars = buildBatchInput(batch).length;
+  return {
+    batchSize: batch.length,
+    inputChars,
+    longestNameChars: nameLengths.length > 0 ? Math.max(...nameLengths) : 0,
+    totalNameChars: nameLengths.reduce((sum, length) => sum + length, 0),
+  };
+};
+
+const translateChunk = async (batch: BatchInputEntry[], depth = 0): Promise<(string | null)[]> => {
+  const batchInput = buildBatchInput(batch);
+  const metrics = getBatchMetrics(batch);
+
+  logger.info(`GPT batch start (${batch.length})`);
+
+  try {
+    const rawText = await callWithRetry(batchInput);
+    return parseResponse(rawText, batch.length);
+  } catch (error) {
+    if (isContextLimitError(error) && batch.length > 1) {
+      const middleIndex = Math.ceil(batch.length / 2);
+      logger.warn(`GPT context limit, splitting ${batch.length} → ${middleIndex}+${batch.length - middleIndex} (depth ${depth})`);
+
+      const leftResult = await translateChunk(batch.slice(0, middleIndex), depth + 1);
+      const rightResult = await translateChunk(batch.slice(middleIndex), depth + 1);
+      return [...leftResult, ...rightResult];
+    }
+
+    logger.error('GPT batch failed', { ...metrics, splitDepth: depth, ...getErrorMeta(error) });
+    return new Array<null>(batch.length).fill(null);
   }
 };
 
@@ -89,23 +169,24 @@ export const translateBatch = async (entries: TranslateEntry[]): Promise<(string
   }));
 
   const batches: BatchInputEntry[][] = [];
-  for (let batchStart = 0; batchStart < inputEntries.length; batchStart += BATCH_SIZE) {
-    batches.push(inputEntries.slice(batchStart, batchStart + BATCH_SIZE));
+  let currentBatch: BatchInputEntry[] = [];
+  for (const entry of inputEntries) {
+    const prospective = [...currentBatch, entry];
+    const wouldExceedCount = prospective.length > BATCH_SIZE;
+    const wouldExceedChars = JSON.stringify(prospective).length > MAX_BATCH_CHARS;
+    if (currentBatch.length > 0 && (wouldExceedCount || wouldExceedChars)) {
+      batches.push(currentBatch);
+      currentBatch = [entry];
+    } else {
+      currentBatch.push(entry);
+    }
   }
+  if (currentBatch.length > 0) batches.push(currentBatch);
 
-  const batchTasks = batches.map((batch) =>
-    limit(async () => {
-      const batchInput = buildBatchInput(batch);
-      try {
-        const rawText = await callWithRetry(batchInput);
-        return parseResponse(rawText, batch.length);
-      } catch {
-        return new Array<null>(batch.length).fill(null);
-      }
-    }),
-  );
-
-  const batchResults = await Promise.all(batchTasks);
+  const batchResults: (string | null)[][] = [];
+  for (const batch of batches) {
+    batchResults.push(await translateChunk(batch));
+  }
   return batchResults.flat();
 };
 

@@ -8,6 +8,7 @@ import type { GPTScenario, MediaFile, MediaFolder } from '../types';
 export interface YandexCreateParams {
   prompt: { id: string };
   input: string;
+  max_output_tokens?: number;
 }
 
 /**
@@ -15,10 +16,23 @@ export interface YandexCreateParams {
  * Включает поля для детектирования мягких сбоев (HTTP 200, но status: 'failed').
  */
 export interface YandexCreateResult {
+  id?: string;
   output_text: string;
   status: string;
-  valid: boolean;
   error: { code: string; message: string } | null;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    total_tokens?: number;
+    input_tokens_details?: {
+      cached_tokens?: number;
+    };
+  };
+  conversation?: {
+    id?: string;
+  } | null;
+  incomplete_details?: unknown;
+  output?: unknown[];
 }
 
 /**

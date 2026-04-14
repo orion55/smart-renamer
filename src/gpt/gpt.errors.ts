@@ -1,5 +1,5 @@
 // Коды ошибок, при которых повтор запроса бессмысленен (конфигурационные)
-export const NON_RETRYABLE_CODES = new Set(['model_call_error']);
+export const NON_RETRYABLE_CODES = new Set(['model_call_error', 'invalid_model_output']);
 
 export class GptSoftError extends Error {
   constructor(
