@@ -9,6 +9,7 @@ import {
   YANDEX_FOLDER_ID,
   YANDEX_PROMPT_ID,
 } from './gpt.constants';
+import { GptSoftError, NON_RETRYABLE_CODES } from './gpt.errors';
 import type {
   MediaGptEntry,
   TranslateEntry,
@@ -28,38 +29,47 @@ const client = new OpenAI({
   },
 });
 
-// Кастуем только метод create, сохраняя this-привязку через .bind().
-// Необходимо, т.к. Yandex Cloud заменяет стандартный параметр `model`
-// на `prompt.id` — несовместимые типы на уровне TypeScript, но runtime совместим.
-const yandexCreate = client.responses.create.bind(client.responses) as unknown as (
-  params: YandexCreateParams,
-) => Promise<YandexCreateResult>;
+const yandexCreate = (params: YandexCreateParams): Promise<YandexCreateResult> =>
+  client.responses.create(params as never) as unknown as Promise<YandexCreateResult>;
 
 const limit = pLimit(CONCURRENCY);
 
-const formatApiError = (error: unknown): Record<string, unknown> => {
-  if (error instanceof OpenAI.APIError) {
-    return { status: error.status, name: error.name, message: error.message, body: error.error };
+const callYandex = async (input: string): Promise<string> => {
+  const response = await yandexCreate({ prompt: { id: YANDEX_PROMPT_ID }, input });
+  if (response.status === 'failed' || !response.valid) {
+    const apiError = response.error ?? { code: 'unknown', message: 'no error details' };
+    throw new GptSoftError(
+      apiError.message,
+      apiError.code,
+      !NON_RETRYABLE_CODES.has(apiError.code),
+    );
   }
-  return { message: String(error) };
+  return response.output_text;
 };
 
 const callWithRetry = async (input: string, attempt = 0): Promise<string> => {
   try {
-    const response = await yandexCreate({ prompt: { id: YANDEX_PROMPT_ID }, input });
-    console.log(response);
-    return response.output_text;
+    return await callYandex(input);
   } catch (error) {
-    const details = formatApiError(error);
-    if (attempt >= MAX_RETRIES - 1) {
-      logger.error(`GPT request failed permanently after ${MAX_RETRIES} attempts`, details);
+    const isNonRetryable = error instanceof GptSoftError && !error.retryable;
+    const isExhausted = attempt >= MAX_RETRIES - 1;
+
+    if (isNonRetryable || isExhausted) {
+      const meta =
+        error instanceof GptSoftError
+          ? { code: error.code, message: error.message }
+          : { message: error instanceof OpenAI.APIError ? error.message : String(error) };
+      logger.error(
+        isNonRetryable
+          ? `GPT request failed (non-retryable: ${(error as GptSoftError).code})`
+          : `GPT request failed after ${MAX_RETRIES} attempts`,
+        meta,
+      );
       throw error;
     }
+
     const delayMs = 1000 * 2 ** attempt;
-    logger.warn(
-      `GPT request failed (attempt ${attempt + 1}/${MAX_RETRIES}), retrying in ${delayMs}ms`,
-      details,
-    );
+    logger.warn(`GPT attempt ${attempt + 1}/${MAX_RETRIES} failed, retry in ${delayMs}ms`);
     await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
     return callWithRetry(input, attempt + 1);
   }
@@ -89,10 +99,7 @@ export const translateBatch = async (entries: TranslateEntry[]): Promise<(string
       try {
         const rawText = await callWithRetry(batchInput);
         return parseResponse(rawText, batch.length);
-      } catch (error) {
-        logger.error(`translateBatch: all retries exhausted for batch of ${batch.length}`, {
-          error,
-        });
+      } catch {
         return new Array<null>(batch.length).fill(null);
       }
     }),
