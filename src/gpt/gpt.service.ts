@@ -34,7 +34,6 @@ const client = new OpenAI({
 const yandexCreate = (params: YandexCreateParams): Promise<YandexCreateResult> =>
   client.responses.create(params as never) as unknown as Promise<YandexCreateResult>;
 
-
 const getErrorMeta = (error: unknown) => {
   if (error instanceof GptSoftError) {
     return { code: error.code, details: error.message };
@@ -143,7 +142,9 @@ const translateChunk = async (batch: BatchInputEntry[], depth = 0): Promise<(str
   } catch (error) {
     if (isContextLimitError(error) && batch.length > 1) {
       const middleIndex = Math.ceil(batch.length / 2);
-      logger.warn(`GPT context limit, splitting ${batch.length} → ${middleIndex}+${batch.length - middleIndex} (depth ${depth})`);
+      logger.warn(
+        `GPT context limit, splitting ${batch.length} → ${middleIndex}+${batch.length - middleIndex} (depth ${depth})`,
+      );
 
       const leftResult = await translateChunk(batch.slice(0, middleIndex), depth + 1);
       const rightResult = await translateChunk(batch.slice(middleIndex), depth + 1);
