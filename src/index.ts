@@ -3,7 +3,6 @@ import { buildGptQueue } from './classifier/classifier.service';
 import { applyTranslations } from './gpt/gpt.service';
 import { resolveInDir } from './helpers/env';
 import { printSmartRenamer } from './helpers/greeting';
-import { createGptProgress, createRenameProgress } from './helpers/progress';
 import { logger } from './logger.service';
 import { renameAll } from './renamer/renamer.service';
 import { processFolders, scanDirectory, scanFiles } from './scanner/scanner.service';
@@ -13,10 +12,8 @@ dotenv.config();
 
 printSmartRenamer();
 
-const startTime = new Date();
-
 void (async () => {
-  logger.info(`SmartRenamer started at ${startTime.toISOString()}`);
+  logger.info('SmartRenamer started');
 
   const inDir = resolveInDir();
   logger.info(`Input directory: ${inDir}`);
@@ -37,22 +34,15 @@ void (async () => {
 
   // ── GROUP 4: GPT translation ─────────────────────────────────────────────────
 
-  const gptProgress = createGptProgress(foldersForGpt.length + filesForGpt.length);
-  const translations = await applyTranslations(
-    [...foldersForGpt, ...filesForGpt],
-    gptProgress.tick,
-  );
-  gptProgress.stop();
+  const translations = await applyTranslations([...foldersForGpt, ...filesForGpt]);
 
   // ── GROUP 5: Rename ──────────────────────────────────────────────────────────
 
-  const renameProgress = createRenameProgress(folders.length + looseFiles.length);
-  renameAll(folders, looseFiles, translations, renameProgress.tick);
-  renameProgress.stop();
+  renameAll(folders, looseFiles, translations);
 
   // ── GROUP 6: Summary ─────────────────────────────────────────────────────────
 
-  summarize(folders, looseFiles, startTime);
+  summarize(folders, looseFiles);
 
   logger.info('SmartRenamer finished');
 })();

@@ -19,18 +19,16 @@ export class StatsTracker {
     }
   }
 
-  getSummary(startTime: Date): ProcessingResult {
+  getSummary(): ProcessingResult {
     return {
       total: this.total,
       renamed: this.renamed,
       skipped: this.skipped,
       errors: this.errors,
-      duration: Date.now() - startTime.getTime(),
     };
   }
 
   printSummary(result: ProcessingResult): void {
-    const durationSec = (result.duration / 1000).toFixed(1);
     const line = '─'.repeat(44);
 
     console.log(`\n${colors.cyan(line)}`);
@@ -42,23 +40,18 @@ export class StatsTracker {
     console.log(
       `  Ошибки:     ${result.errors > 0 ? colors.red(String(result.errors)) : colors.white('0')}`,
     );
-    console.log(`  Время:      ${colors.white(`${durationSec} с`)}`);
     console.log(`${colors.cyan(line)}\n`);
 
     logger.info(
       `Summary: total=${result.total} renamed=${result.renamed} ` +
-        `skipped=${result.skipped} errors=${result.errors} duration=${durationSec}s`,
+        `skipped=${result.skipped} errors=${result.errors}`,
     );
   }
 }
 
 /** Удобная обёртка для однострочного вызова из index.ts. */
-export const summarize = (
-  folders: MediaFolder[],
-  looseFiles: MediaFile[],
-  startTime: Date,
-): void => {
+export const summarize = (folders: MediaFolder[], looseFiles: MediaFile[]): void => {
   const tracker = new StatsTracker();
   tracker.collectFromFiles(folders, looseFiles);
-  tracker.printSummary(tracker.getSummary(startTime));
+  tracker.printSummary(tracker.getSummary());
 };

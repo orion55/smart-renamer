@@ -54,6 +54,7 @@ export const JUNK_EXTENSIONS = new Set([
   '.png',
   '.nzb',
   '.url',
+  '.!qb',
 ]);
 
 /**

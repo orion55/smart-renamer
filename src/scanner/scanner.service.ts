@@ -165,9 +165,20 @@ export const flattenSubfolders = (folder: MediaFolder): void => {
  * Вызывается из оркестратора после `scanDirectory`.
  */
 export const processFolders = (folders: MediaFolder[]): void => {
-  for (const folder of folders) {
+  let index = folders.length;
+  while (index--) {
+    const folder = folders[index];
     deleteJunkFiles(folder.path);
     flattenSubfolders(folder);
     folder.files = getVideoFiles(folder.path);
+
+    if (folder.files.length === 0) {
+      try {
+        fs.rmdirSync(folder.path);
+      } catch {
+        // папка не пуста (остались не-видео файлы) — не удаляем
+      }
+      folders.splice(index, 1);
+    }
   }
 };

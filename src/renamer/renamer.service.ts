@@ -3,8 +3,38 @@ import path from 'node:path';
 import { logger } from '../logger.service';
 import type { MediaFile, MediaFolder } from '../types';
 import { resolveConflict } from './conflict.resolver';
-import { FOUR_DIGIT_PATTERN, SE_PATTERN, SXE_PATTERN } from './renamer.constants';
+import {
+  FOUR_DIGIT_PATTERN,
+  LEADING_NUMBER_PATTERN,
+  SE_PATTERN,
+  SXE_PATTERN,
+  WINDOWS_INVALID_FILE_CHARS_PATTERN,
+  WINDOWS_MAX_CONTROL_CHAR_CODE,
+  WINDOWS_RESERVED_NAMES,
+  WINDOWS_TRAILING_DOTS_AND_SPACES_PATTERN,
+} from './renamer.constants';
 import type { EpisodeInfo, FileInfo } from './renamer.types';
+
+const sanitizePathName = (value: string, fallback: string): string => {
+  const sanitized = value
+    .split('')
+    .map((char) => (char.charCodeAt(0) <= WINDOWS_MAX_CONTROL_CHAR_CODE ? ' ' : char))
+    .join('')
+    .replace(WINDOWS_INVALID_FILE_CHARS_PATTERN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(WINDOWS_TRAILING_DOTS_AND_SPACES_PATTERN, '');
+
+  if (!sanitized) {
+    return fallback;
+  }
+
+  if (WINDOWS_RESERVED_NAMES.has(sanitized.toUpperCase())) {
+    return `${sanitized}_`;
+  }
+
+  return sanitized;
+};
 
 /**
  * Извлечь номер сезона и эпизода из имени файла.
@@ -32,6 +62,11 @@ const extractEpisodeInfo = (filename: string): EpisodeInfo | null => {
     }
   }
 
+  const leadingMatch = LEADING_NUMBER_PATTERN.exec(filename);
+  if (leadingMatch) {
+    return { season: 1, episode: Number.parseInt(leadingMatch[1], 10) };
+  }
+
   return null;
 };
 
@@ -47,7 +82,7 @@ const extractEpisodeInfo = (filename: string): EpisodeInfo | null => {
  * Конфликты разрешаются через resolveConflict (победа существующего файла).
  * Папка переименовывается отдельно через renameFolder.
  */
-export const renameEpisodeFiles = (folder: MediaFolder, translatedTitle: string): void => {
+export const renameEpisodeFiles = (folder: MediaFolder): void => {
   const fileInfos: FileInfo[] = [];
 
   for (const file of folder.files) {
@@ -57,18 +92,10 @@ export const renameEpisodeFiles = (folder: MediaFolder, translatedTitle: string)
     }
   }
 
-  if (fileInfos.length === 0) {
-    logger.info(`renameEpisodeFiles: no episode markers found in "${translatedTitle}", skipping`);
-    return;
-  }
+  if (fileInfos.length === 0) return;
 
   const uniqueSeasons = new Set(fileInfos.map((info) => info.season));
   const useMultiSeason = uniqueSeasons.size > 1;
-
-  logger.info(
-    `Renaming ${fileInfos.length} episode file(s) for "${translatedTitle}" ` +
-      `(${useMultiSeason ? '4-digit SSEE' : '2-digit EE'} format)`,
-  );
 
   for (const { file, season, episode } of fileInfos) {
     const paddedEpisode = String(episode).padStart(2, '0');
@@ -87,9 +114,6 @@ export const renameEpisodeFiles = (folder: MediaFolder, translatedTitle: string)
 
     try {
       fs.renameSync(file.path, targetPath);
-      logger.info(
-        `Renamed: ${file.originalName}${file.extension} → ${newBaseName}${file.extension}`,
-      );
       file.status = 'processed';
       file.path = targetPath;
       file.newName = newBaseName;
@@ -107,7 +131,8 @@ export const renameEpisodeFiles = (folder: MediaFolder, translatedTitle: string)
  */
 export const renameFolder = (folder: MediaFolder, translatedTitle: string): void => {
   const parentDir = path.dirname(folder.path);
-  const targetPath = path.join(parentDir, translatedTitle);
+  const safeTitle = sanitizePathName(translatedTitle, folder.originalName);
+  const targetPath = path.join(parentDir, safeTitle);
 
   if (targetPath === folder.path) return;
 
@@ -118,9 +143,8 @@ export const renameFolder = (folder: MediaFolder, translatedTitle: string): void
 
   try {
     fs.renameSync(folder.path, targetPath);
-    logger.info(`Renamed folder: ${folder.originalName} → ${translatedTitle}`);
     folder.path = targetPath;
-    folder.newName = translatedTitle;
+    folder.newName = safeTitle;
   } catch (error) {
     logger.error(`Failed to rename folder: ${folder.path}`, { error });
   }
@@ -140,7 +164,8 @@ export const liftSingleMovie = (folder: MediaFolder, translatedTitle: string): v
 
   const file = folder.files[0];
   const inDir = path.dirname(folder.path);
-  const newFileName = `${translatedTitle}${file.extension}`;
+  const safeTitle = sanitizePathName(translatedTitle, folder.originalName);
+  const newFileName = `${safeTitle}${file.extension}`;
   const targetPath = path.join(inDir, newFileName);
 
   resolveConflict(targetPath, file.path);
@@ -152,10 +177,9 @@ export const liftSingleMovie = (folder: MediaFolder, translatedTitle: string): v
 
   try {
     fs.renameSync(file.path, targetPath);
-    logger.info(`Lifted movie: ${file.originalName}${file.extension} → ${newFileName}`);
     file.status = 'processed';
     file.path = targetPath;
-    file.newName = translatedTitle;
+    file.newName = safeTitle;
   } catch (error) {
     logger.error(`Failed to lift movie: ${file.path}`, { error });
     file.status = 'error';
@@ -164,7 +188,6 @@ export const liftSingleMovie = (folder: MediaFolder, translatedTitle: string): v
 
   try {
     fs.rmSync(folder.path, { recursive: true, force: true });
-    logger.info(`Deleted folder after lift: ${folder.path}`);
   } catch (error) {
     logger.warn(`Failed to delete folder: ${folder.path}`, { error });
   }
@@ -175,7 +198,8 @@ export const liftSingleMovie = (folder: MediaFolder, translatedTitle: string): v
  */
 export const renameMovieFile = (file: MediaFile, translatedTitle: string): void => {
   const dir = path.dirname(file.path);
-  const newFileName = `${translatedTitle}${file.extension}`;
+  const safeTitle = sanitizePathName(translatedTitle, file.originalName);
+  const newFileName = `${safeTitle}${file.extension}`;
   const targetPath = path.join(dir, newFileName);
 
   if (targetPath === file.path) return;
@@ -189,10 +213,9 @@ export const renameMovieFile = (file: MediaFile, translatedTitle: string): void 
 
   try {
     fs.renameSync(file.path, targetPath);
-    logger.info(`Renamed movie: ${file.originalName}${file.extension} → ${newFileName}`);
     file.status = 'processed';
     file.path = targetPath;
-    file.newName = translatedTitle;
+    file.newName = safeTitle;
   } catch (error) {
     logger.error(`Failed to rename movie: ${file.path}`, { error });
     file.status = 'error';
@@ -207,10 +230,6 @@ export const renameMovieFile = (file: MediaFile, translatedTitle: string): void 
 export const renameMultipartFolder = (folder: MediaFolder, translatedTitle: string): void => {
   const sortedFiles = [...folder.files].sort((fileA, fileB) =>
     fileA.originalName.localeCompare(fileB.originalName),
-  );
-
-  logger.info(
-    `Renaming ${sortedFiles.length} part(s) of multipart folder "${folder.originalName}"`,
   );
 
   sortedFiles.forEach((file, index) => {
@@ -228,9 +247,6 @@ export const renameMultipartFolder = (folder: MediaFolder, translatedTitle: stri
 
     try {
       fs.renameSync(file.path, targetPath);
-      logger.info(
-        `Renamed part: ${file.originalName}${file.extension} → ${newBaseName}${file.extension}`,
-      );
       file.status = 'processed';
       file.path = targetPath;
       file.newName = newBaseName;
@@ -254,15 +270,12 @@ export const renameAll = (
   folders: MediaFolder[],
   looseFiles: MediaFile[],
   translations: ReadonlyMap<string, string>,
-  onProgress?: (current: number, name: string) => void,
 ): void => {
-  let current = 0;
-
   for (const folder of folders) {
     const title = translations.get(folder.path) ?? folder.originalName;
 
     if (folder.contentType === 'series') {
-      renameEpisodeFiles(folder, title);
+      renameEpisodeFiles(folder);
       renameFolder(folder, title);
     } else if (folder.contentType === 'movie') {
       if (folder.files.length === 1) {
@@ -273,15 +286,10 @@ export const renameAll = (
     } else {
       logger.warn(`Skipping rename — unknown content type: "${folder.originalName}"`);
     }
-
-    current++;
-    onProgress?.(current, title);
   }
 
   for (const file of looseFiles) {
     const title = translations.get(file.path) ?? file.originalName;
     renameMovieFile(file, title);
-    current++;
-    onProgress?.(current, title);
   }
 };

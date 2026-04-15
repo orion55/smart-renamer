@@ -38,5 +38,4 @@ export interface ProcessingResult {
   renamed: number;
   skipped: number;
   errors: number;
-  duration: number;
 }
