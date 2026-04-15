@@ -2,7 +2,7 @@
 
 ## Что уже готово (DONE)
 
-> Последнее обновление: 2026-04-13 (GROUP 4 ✅)
+> Последнее обновление: 2026-04-15 (GROUP 0–5 ✅ | GROUP 6 ❌ TODO | GROUP 7 🔶 PARTIAL)
 
 | Файл | Статус | Примечания |
 |---|---|---|
@@ -12,10 +12,14 @@
 | `src/helpers/env.ts` | ✅ DONE | `resolveInDir()` — валидация `IN_DIR` из `.env` |
 | `appDir.ts` | ✅ DONE | Экспорт `ROOT_DIR` |
 | `tsconfig.json` | ✅ DONE | Strict CommonJS, ES2020 |
-| `package.json` | ❓ | Наличие `openai` и `p-limit@^4` не проверено |
+| `package.json` | ✅ DONE | `openai@^6.34.0`, `p-limit@^4.0.0` установлены |
 | `src/types.ts` | ✅ DONE | Все 4 интерфейса + вспомогательные типы (T1) |
 | `src/helpers/patterns.ts` | ✅ DONE | Все 8 паттернов + VIDEO_EXTENSIONS, TRANSLIT_PATTERN, CYRILLIC, LATIN (T2) |
 | `src/scanner/scanner.service.ts` | ✅ DONE | scanDirectory, scanFiles, getVideoFiles, deleteJunkFiles, flattenSubfolders, processFolders (T3) |
+| `src/classifier/classifier.service.ts` | ✅ DONE | classify, isAlreadyProcessed, needsGPT, buildGptQueue (T4) |
+| `src/gpt/prompt.builder.ts` | ✅ DONE | buildBatchInput (T5-A) |
+| `src/gpt/response.parser.ts` | ✅ DONE | parseResponse (T5-B) |
+| `src/gpt/gpt.service.ts` | ✅ DONE | translateBatch, callWithRetry, applyTranslations (T5-C) |
 
 ---
 
@@ -47,25 +51,21 @@ T0 (deps + .env)
 
 ## GROUP 0 — Инфраструктура
 
-### T0-A: Установить npm зависимости
+### T0-A: Установить npm зависимости ✅ DONE
 **Приоритет**: P0 | **Сложность**: Small
 
-Добавить в `dependencies`:
-- `openai` — OpenAI SDK как клиент Yandex Cloud (`baseURL` override)
-- `p-limit@^4` — контроль конкурентности (⚠️ v5+ ESM-only, несовместим с `commonjs`)
-
-```bash
-npm install openai p-limit@^4
-```
+Установлено:
+- `openai@^6.34.0` — OpenAI SDK как клиент Yandex Cloud (`baseURL` override)
+- `p-limit@^4.0.0` — контроль конкурентности (⚠️ v5+ ESM-only, несовместим с `commonjs`)
 
 **Зависит от**: ничего
 
 ---
 
-### T0-B: Дополнить .env.example
+### T0-B: Дополнить .env.example ✅ DONE
 **Приоритет**: P0 | **Сложность**: Small
 
-Добавить:
+Добавлено в `.env.example`:
 ```env
 YANDEX_API_KEY=        # API-ключ Yandex Cloud
 IN_DIR=                # Входная директория (например f:\Сериалы)
@@ -409,8 +409,8 @@ class StatsTracker {
 
 | Задача | Файл | Приоритет | Сложность | Статус |
 |---|---|---|---|---|
-| T0-A | `package.json` | P0 | Small | ❓ не проверено |
-| T0-B | `.env.example` | P0 | Small | ❓ не проверено |
+| T0-A | `package.json` | P0 | Small | ✅ DONE |
+| T0-B | `.env.example` | P0 | Small | ✅ DONE |
 | T1 | `src/types.ts` | P0 | Small | ✅ DONE |
 | T2 | `src/helpers/patterns.ts` | P0 | Medium | ✅ DONE |
 | T3 | `src/scanner/scanner.service.ts` | P0 | Medium | ✅ DONE |
@@ -418,8 +418,8 @@ class StatsTracker {
 | T5-A | `src/gpt/prompt.builder.ts` | P0 | Medium | ✅ DONE |
 | T5-B | `src/gpt/response.parser.ts` | P0 | Small | ✅ DONE |
 | T5-C | `src/gpt/gpt.service.ts` | P0 | Medium | ✅ DONE |
-| T6-A | `src/renamer/conflict.resolver.ts` | P0 | Small | ❌ TODO |
-| T6-B | `src/renamer/renamer.service.ts` | P0 | Large | ❌ TODO |
+| T6-A | `src/renamer/conflict.resolver.ts` | P0 | Small | ✅ DONE |
+| T6-B | `src/renamer/renamer.service.ts` | P0 | Large | ✅ DONE |
 | T7 | `src/index.ts` | P0 | Large | 🔶 PARTIAL |
 | T8 | `src/stats.ts` | P1 | Small | ❌ TODO |
 | T9 | `src/helpers/progress.ts` | P2 | Small | ❌ TODO |

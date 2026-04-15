@@ -4,6 +4,7 @@ import { applyTranslations } from './gpt/gpt.service';
 import { resolveInDir } from './helpers/env';
 import { printSmartRenamer } from './helpers/greeting';
 import { logger } from './logger.service';
+import { renameAll } from './renamer/renamer.service';
 import { processFolders, scanDirectory, scanFiles } from './scanner/scanner.service';
 
 dotenv.config();
@@ -33,9 +34,10 @@ void (async () => {
   // ── GROUP 4: GPT translation ─────────────────────────────────────────────────
 
   const translations = await applyTranslations([...foldersForGpt, ...filesForGpt]);
-  console.log({ translations });
 
-  // ── TODO GROUP 5: rename ─────────────────────────────────────────────────────
-  // renameAll(folders, looseFiles, translations)
+  // ── GROUP 5: Rename ──────────────────────────────────────────────────────────
+
+  renameAll(folders, looseFiles, translations);
+
   // ── TODO GROUP 7: print summary ──────────────────────────────────────────────
 })();
