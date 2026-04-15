@@ -66,6 +66,18 @@ const isProviderOversizeMessage = (message: string): boolean => {
   );
 };
 
+const normalizeTranslation = (value: string | null): string | null => {
+  if (value == null) return null;
+
+  const normalized = value.trim().replace(/\s+/g, ' ');
+  if (!normalized) return null;
+
+  // GPT sometimes returns "-" as "I don't know". In that case keep the source name.
+  if (/^-+$/.test(normalized)) return null;
+
+  return normalized;
+};
+
 const callYandex = async (input: string): Promise<string> => {
   const response = await yandexCreate({
     prompt: { id: YANDEX_PROMPT_ID },
@@ -200,7 +212,7 @@ export const applyTranslations = async (allEntries: MediaGptEntry[]): Promise<Tr
   const results = await translateBatch(allEntries);
   const translations = new Map<string, string>();
   for (const [entryIndex, entry] of allEntries.entries()) {
-    const translated = results[entryIndex];
+    const translated = normalizeTranslation(results[entryIndex]);
     if (translated != null) {
       translations.set(entry.item.path, translated);
     }

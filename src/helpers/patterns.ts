@@ -39,7 +39,7 @@ export const NUMERIC_FILENAME = /^\d{2}(\d{2})?$/;
 /**
  * COLLECTION — папка является коллекцией фильмов.
  */
-export const COLLECTION = /\bCollection\b/i;
+export const COLLECTION = /\b(?:Collection|Коллекция)\b/i;
 
 /**
  * JUNK_EXTENSIONS — расширения файлов, подлежащих удалению.
@@ -55,6 +55,7 @@ export const JUNK_EXTENSIONS = new Set([
   '.nzb',
   '.url',
   '.!qb',
+  '.ac3',
 ]);
 
 /**

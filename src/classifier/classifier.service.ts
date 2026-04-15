@@ -74,19 +74,21 @@ export const needsGPT = (name: string): GPTScenario | null => {
  * Классифицировать папку или файл по имени и количеству видеофайлов.
  *
  * Дерево решений (согласно плану T4):
- * 1. EPISODE_MARKER → 'series'
- * 2. SEASON_MARKER  → 'series'
- * 3. COLLECTION     → 'movie'
- * 4. YEAR           → 'movie'
- * 5. Нет маркеров:
- *    - videoFileCount === 1 → 'movie'
- *    - videoFileCount >= 2  → 'series'
- * 6. Иначе          → 'unknown' (логируется)
+ * 1. videoFileCount === 1 → 'movie'
+ * 2. EPISODE_MARKER → 'series'
+ * 3. SEASON_MARKER  → 'series'
+ * 4. COLLECTION     → 'movie'
+ * 5. YEAR           → 'movie'
+ * 6. videoFileCount >= 2  → 'series'
+ * 7. Иначе          → 'unknown' (логируется)
+ *
+ * Правило пользователя: если после очистки/выравнивания в папке остался
+ * ровно один видеофайл, это фильм, даже если в имени есть season-маркеры.
  */
 export const classify = (name: string, videoFileCount: number): ContentType => {
+  if (videoFileCount === 1) return 'movie';
   if (EPISODE_MARKER.test(name) || SEASON_MARKER.test(name)) return 'series';
   if (COLLECTION.test(name) || YEAR.test(name)) return 'movie';
-  if (videoFileCount === 1) return 'movie';
   if (videoFileCount >= 2) return 'series';
   logger.warn(`classify: cannot determine content type for "${name}" (${videoFileCount} files)`);
   return 'unknown';

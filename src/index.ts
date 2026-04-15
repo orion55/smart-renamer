@@ -38,6 +38,7 @@ void (async () => {
 
   // ── GROUP 5: Rename ──────────────────────────────────────────────────────────
 
+  logger.info('Starting renameAll');
   renameAll(folders, looseFiles, translations);
 
   // ── GROUP 6: Summary ─────────────────────────────────────────────────────────

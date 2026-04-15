@@ -1,13 +1,21 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { SEASON_MARKER } from '../helpers/patterns';
 import { logger } from '../logger.service';
 import type { MediaFile, MediaFolder } from '../types';
 import { resolveConflict } from './conflict.resolver';
 import {
+  DOT_SEASON_EPISODE_PATTERN,
+  EP_PATTERN,
   FOUR_DIGIT_PATTERN,
   LEADING_NUMBER_PATTERN,
+  RUS_EPISODE_PATTERN,
   SE_PATTERN,
+  SEASON_EPISODE_PATTERN,
+  SUFFIX_SEASON_RUS_EPISODE_PATTERN,
   SXE_PATTERN,
+  TRAILING_NUMBER_PATTERN,
+  TRAILING_S_NUMBER_PATTERN,
   WINDOWS_INVALID_FILE_CHARS_PATTERN,
   WINDOWS_MAX_CONTROL_CHAR_CODE,
   WINDOWS_RESERVED_NAMES,
@@ -36,6 +44,15 @@ const sanitizePathName = (value: string, fallback: string): string => {
   return sanitized;
 };
 
+const normalizeSeriesFolderTitle = (value: string): string =>
+  value
+    .replace(SEASON_MARKER, ' ')
+    .replace(/\(\s*\)/g, ' ')
+    .replace(/\[\s*\]/g, ' ')
+    .replace(/\s*[._-]\s*$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
 /**
  * Извлечь номер сезона и эпизода из имени файла.
  * Приоритет: SxxExx → NxNN → .SSEE. (4 цифры).
@@ -52,6 +69,40 @@ const extractEpisodeInfo = (filename: string): EpisodeInfo | null => {
     return { season: Number.parseInt(sxeMatch[1], 10), episode: Number.parseInt(sxeMatch[2], 10) };
   }
 
+  const dotSeasonEpisodeMatch = DOT_SEASON_EPISODE_PATTERN.exec(filename);
+  if (dotSeasonEpisodeMatch) {
+    return {
+      season: Number.parseInt(dotSeasonEpisodeMatch[1], 10),
+      episode: Number.parseInt(dotSeasonEpisodeMatch[2], 10),
+    };
+  }
+
+  const seasonEpisodeMatch = SEASON_EPISODE_PATTERN.exec(filename);
+  if (seasonEpisodeMatch) {
+    return {
+      season: Number.parseInt(seasonEpisodeMatch[1], 10),
+      episode: Number.parseInt(seasonEpisodeMatch[2], 10),
+    };
+  }
+
+  const epMatch = EP_PATTERN.exec(filename);
+  if (epMatch) {
+    return { season: 1, episode: Number.parseInt(epMatch[1], 10) };
+  }
+
+  const suffixSeasonRusEpisodeMatch = SUFFIX_SEASON_RUS_EPISODE_PATTERN.exec(filename);
+  if (suffixSeasonRusEpisodeMatch) {
+    return {
+      season: Number.parseInt(suffixSeasonRusEpisodeMatch[1], 10),
+      episode: Number.parseInt(suffixSeasonRusEpisodeMatch[2], 10),
+    };
+  }
+
+  const rusEpisodeMatch = RUS_EPISODE_PATTERN.exec(filename);
+  if (rusEpisodeMatch) {
+    return { season: 1, episode: Number.parseInt(rusEpisodeMatch[1], 10) };
+  }
+
   const fourDigitMatch = FOUR_DIGIT_PATTERN.exec(filename);
   if (fourDigitMatch) {
     const season = Number.parseInt(fourDigitMatch[1], 10);
@@ -65,6 +116,16 @@ const extractEpisodeInfo = (filename: string): EpisodeInfo | null => {
   const leadingMatch = LEADING_NUMBER_PATTERN.exec(filename);
   if (leadingMatch) {
     return { season: 1, episode: Number.parseInt(leadingMatch[1], 10) };
+  }
+
+  const trailingSMatch = TRAILING_S_NUMBER_PATTERN.exec(filename);
+  if (trailingSMatch) {
+    return { season: 1, episode: Number.parseInt(trailingSMatch[1], 10) };
+  }
+
+  const trailingNumberMatch = TRAILING_NUMBER_PATTERN.exec(filename);
+  if (trailingNumberMatch) {
+    return { season: 1, episode: Number.parseInt(trailingNumberMatch[1], 10) };
   }
 
   return null;
@@ -272,7 +333,9 @@ export const renameAll = (
   translations: ReadonlyMap<string, string>,
 ): void => {
   for (const folder of folders) {
-    const title = translations.get(folder.path) ?? folder.originalName;
+    const rawTitle = translations.get(folder.path) ?? folder.originalName;
+    const title =
+      folder.contentType === 'series' ? normalizeSeriesFolderTitle(rawTitle) : rawTitle;
 
     if (folder.contentType === 'series') {
       renameEpisodeFiles(folder);
