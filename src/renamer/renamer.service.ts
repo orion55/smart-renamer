@@ -254,7 +254,10 @@ export const renameAll = (
   folders: MediaFolder[],
   looseFiles: MediaFile[],
   translations: ReadonlyMap<string, string>,
+  onProgress?: (current: number, name: string) => void,
 ): void => {
+  let current = 0;
+
   for (const folder of folders) {
     const title = translations.get(folder.path) ?? folder.originalName;
 
@@ -270,10 +273,15 @@ export const renameAll = (
     } else {
       logger.warn(`Skipping rename — unknown content type: "${folder.originalName}"`);
     }
+
+    current++;
+    onProgress?.(current, title);
   }
 
   for (const file of looseFiles) {
     const title = translations.get(file.path) ?? file.originalName;
     renameMovieFile(file, title);
+    current++;
+    onProgress?.(current, title);
   }
 };

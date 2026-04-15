@@ -2,13 +2,13 @@
 
 ## Что уже готово (DONE)
 
-> Последнее обновление: 2026-04-15 (GROUP 0–5 ✅ | GROUP 6 ❌ TODO | GROUP 7 🔶 PARTIAL)
+> Последнее обновление: 2026-04-15 (GROUP 0–6 ✅ | GROUP 7 ✅)
 
 | Файл | Статус | Примечания |
 |---|---|---|
-| `src/index.ts` | 🔶 PARTIAL | Баннер + сканер подключён; GROUP 4–7 — TODO-заглушки |
+| `src/index.ts` | ✅ DONE | Полный оркестратор: сканер → классификатор → GPT → rename → summary |
 | `src/logger.service.ts` | ✅ DONE | Winston + DailyRotateFile, полностью работает |
-| `src/helpers/greeting.ts` | ✅ DONE | cfonts баннер |
+| `src/helpers/greeting.ts` | ✅ DONE | cfonts баннер + версия из package.json + дата запуска (T8) |
 | `src/helpers/env.ts` | ✅ DONE | `resolveInDir()` — валидация `IN_DIR` из `.env` |
 | `appDir.ts` | ✅ DONE | Экспорт `ROOT_DIR` |
 | `tsconfig.json` | ✅ DONE | Strict CommonJS, ES2020 |
@@ -19,7 +19,11 @@
 | `src/classifier/classifier.service.ts` | ✅ DONE | classify, isAlreadyProcessed, needsGPT, buildGptQueue (T4) |
 | `src/gpt/prompt.builder.ts` | ✅ DONE | buildBatchInput (T5-A) |
 | `src/gpt/response.parser.ts` | ✅ DONE | parseResponse (T5-B) |
-| `src/gpt/gpt.service.ts` | ✅ DONE | translateBatch, callWithRetry, applyTranslations (T5-C) |
+| `src/gpt/gpt.service.ts` | ✅ DONE | translateBatch, callWithRetry, applyTranslations + onProgress (T5-C) |
+| `src/renamer/conflict.resolver.ts` | ✅ DONE | resolveConflict (T6-A) |
+| `src/renamer/renamer.service.ts` | ✅ DONE | renameEpisodeFiles, renameFolder, liftSingleMovie, renameAll + onProgress (T6-B) |
+| `src/stats.ts` | ✅ DONE | StatsTracker, collectFromFiles, getSummary, printSummary, summarize (T8) |
+| `src/helpers/progress.ts` | ✅ DONE | createGptProgress, createRenameProgress (T9) |
 
 ---
 
@@ -420,9 +424,9 @@ class StatsTracker {
 | T5-C | `src/gpt/gpt.service.ts` | P0 | Medium | ✅ DONE |
 | T6-A | `src/renamer/conflict.resolver.ts` | P0 | Small | ✅ DONE |
 | T6-B | `src/renamer/renamer.service.ts` | P0 | Large | ✅ DONE |
-| T7 | `src/index.ts` | P0 | Large | 🔶 PARTIAL |
-| T8 | `src/stats.ts` | P1 | Small | ❌ TODO |
-| T9 | `src/helpers/progress.ts` | P2 | Small | ❌ TODO |
+| T7 | `src/index.ts` | P0 | Large | ✅ DONE |
+| T8 | `src/stats.ts` | P1 | Small | ✅ DONE |
+| T9 | `src/helpers/progress.ts` | P2 | Small | ✅ DONE |
 
 ---
 

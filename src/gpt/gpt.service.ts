@@ -161,7 +161,10 @@ const translateChunk = async (batch: BatchInputEntry[], depth = 0): Promise<(str
  * Разбивает на батчи по 50, выполняет параллельно (не более 3 одновременно).
  * Возвращает массив строк той же длины (null при ошибке для конкретной позиции).
  */
-export const translateBatch = async (entries: TranslateEntry[]): Promise<(string | null)[]> => {
+export const translateBatch = async (
+  entries: TranslateEntry[],
+  onProgress?: (done: number) => void,
+): Promise<(string | null)[]> => {
   if (entries.length === 0) return [];
 
   const inputEntries: BatchInputEntry[] = entries.map((entry) => ({
@@ -185,8 +188,11 @@ export const translateBatch = async (entries: TranslateEntry[]): Promise<(string
   if (currentBatch.length > 0) batches.push(currentBatch);
 
   const batchResults: (string | null)[][] = [];
+  let completedItems = 0;
   for (const batch of batches) {
     batchResults.push(await translateChunk(batch));
+    completedItems += batch.length;
+    onProgress?.(completedItems);
   }
   return batchResults.flat();
 };
@@ -196,8 +202,11 @@ export const translateBatch = async (entries: TranslateEntry[]): Promise<(string
  * Возвращает Map<path → translatedName> только для успешно переведённых элементов.
  * Оригинальные объекты не изменяются — поток данных явный и без side-effects.
  */
-export const applyTranslations = async (allEntries: MediaGptEntry[]): Promise<TranslationMap> => {
-  const results = await translateBatch(allEntries);
+export const applyTranslations = async (
+  allEntries: MediaGptEntry[],
+  onProgress?: (done: number) => void,
+): Promise<TranslationMap> => {
+  const results = await translateBatch(allEntries, onProgress);
   const translations = new Map<string, string>();
   for (const [entryIndex, entry] of allEntries.entries()) {
     const translated = results[entryIndex];
