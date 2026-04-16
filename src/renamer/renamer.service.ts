@@ -11,6 +11,7 @@ import {
   LEADING_NUMBER_PATTERN,
   RUS_EPISODE_PATTERN,
   SEASON_EPISODE_PATTERN,
+  SEZON_SERIYA_PATTERN,
   SE_PATTERN,
   SUFFIX_SEASON_RUS_EPISODE_PATTERN,
   SXE_PATTERN,
@@ -71,6 +72,14 @@ const extractEpisodeInfo = (filename: string): EpisodeInfo | null => {
   const sxeMatch = SXE_PATTERN.exec(filename);
   if (sxeMatch) {
     return { season: Number.parseInt(sxeMatch[1], 10), episode: Number.parseInt(sxeMatch[2], 10) };
+  }
+
+  const sezonSeriyaMatch = SEZON_SERIYA_PATTERN.exec(filename);
+  if (sezonSeriyaMatch) {
+    return {
+      season: Number.parseInt(sezonSeriyaMatch[1], 10),
+      episode: Number.parseInt(sezonSeriyaMatch[2], 10),
+    };
   }
 
   const dotSeasonEpisodeMatch = DOT_SEASON_EPISODE_PATTERN.exec(filename);

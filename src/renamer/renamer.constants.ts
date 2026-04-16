@@ -19,6 +19,9 @@ export const EP_PATTERN = /\bep[._\s-]?(\d{1,2})\b/i;
 /** s.1_ep.01, s1ep01 */
 export const SEASON_EPISODE_PATTERN = /[Ss][._\s-]?(\d{1,2})[._\s-]*(?:ep|[Ee])[._\s-]?(\d{1,2})/;
 
+/** (1.sezon.01.seriya.iz.11) — транслитерация с указанием сезона и серии */
+export const SEZON_SERIYA_PATTERN = /(\d{1,2})\.sezon\.(\d{1,2})\.seriy/i;
+
 /** Title-2 (01 сер.) */
 export const SUFFIX_SEASON_RUS_EPISODE_PATTERN =
   /-(\d{1,2})\s*\(\s*(\d{1,2})\s*сер(?:ия)?\.?\s*\)/i;

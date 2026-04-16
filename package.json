@@ -12,7 +12,7 @@
     "lint": "biome lint ./src",
     "format": "biome format --write ./src",
     "check": "biome check --write ./src",
-    "reset-data": "rimraf data && copyfiles -u 1 \"data02/**/*\" data"
+    "reset-data": "rimraf data && copyfiles -u 1 \"data01/**/*\" data"
   },
   "keywords": [],
   "author": "",
