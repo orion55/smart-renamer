@@ -12,6 +12,18 @@ export interface YandexCreateParams {
 }
 
 /**
+ * Alice AI LLM использует стандартные поля Responses API:
+ * `model` — URI вида gpt://<folder>/<model>, `instructions` — системный промпт.
+ */
+export interface AliceCreateParams {
+  model: string;
+  instructions: string;
+  input: string;
+  temperature?: number;
+  max_output_tokens?: number;
+}
+
+/**
  * Подмножество реального `Response` из openai SDK.
  * Включает поля для детектирования мягких сбоев (HTTP 200, но status: 'failed').
  */

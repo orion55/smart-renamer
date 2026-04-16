@@ -7,6 +7,16 @@ const abort = (msg: string): never => {
   process.exit(1);
 };
 
+export const isYandexEnabled = (): boolean =>
+  process.env.YANDEX_AI_ENABLED?.trim().toLowerCase() !== 'false';
+
+export type YandexProvider = 'agent' | 'alice';
+
+export const getYandexProvider = (): YandexProvider => {
+  const raw = process.env.YANDEX_AI_PROVIDER?.trim().toLowerCase();
+  return raw === 'alice' ? 'alice' : 'agent';
+};
+
 export const resolveInDir = (): string => {
   const raw = process.env.IN_DIR?.trim();
   if (!raw) return abort('IN_DIR is not set in .env — aborting');

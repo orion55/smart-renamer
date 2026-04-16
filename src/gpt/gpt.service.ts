@@ -1,6 +1,9 @@
 import OpenAI from 'openai';
+import { getYandexProvider } from '../helpers/env';
 import { logger } from '../logger.service';
 import {
+  ALICE_MODEL,
+  ALICE_TEMPERATURE,
   BATCH_SIZE,
   CONTEXT_LIMIT_MESSAGE,
   INPUT_TOKENS_LIMIT_PATTERN,
@@ -12,7 +15,9 @@ import {
   YANDEX_PROMPT_ID,
 } from './gpt.constants';
 import { GptSoftError, NON_RETRYABLE_CODES } from './gpt.errors';
+import { ALICE_INSTRUCTIONS } from './gpt.prompt';
 import type {
+  AliceCreateParams,
   MediaGptEntry,
   TranslateEntry,
   TranslationMap,
@@ -33,6 +38,12 @@ const client = new OpenAI({
 
 // Yandex использует prompt.id вместо model — параметры не совместимы с типами SDK.
 const yandexCreate = (params: YandexCreateParams): Promise<YandexCreateResult> =>
+  client.responses.create(
+    params as unknown as Parameters<typeof client.responses.create>[0],
+  ) as unknown as Promise<YandexCreateResult>;
+
+// Alice AI LLM использует стандартный Responses API с полем model.
+const aliceCreate = (params: AliceCreateParams): Promise<YandexCreateResult> =>
   client.responses.create(
     params as unknown as Parameters<typeof client.responses.create>[0],
   ) as unknown as Promise<YandexCreateResult>;
@@ -76,18 +87,14 @@ const normalizeTranslation = (value: string | null): string | null => {
   return normalized;
 };
 
-const callYandex = async (input: string): Promise<string> => {
-  const response = await yandexCreate({
-    prompt: { id: YANDEX_PROMPT_ID },
-    input,
-    max_output_tokens: MAX_OUTPUT_TOKENS,
-  });
-
+/**
+ * Общая обработка ответа Responses API — одинакова для агента и Alice.
+ * Бросает GptSoftError при failed-статусе или пустом выводе.
+ */
+const extractOutputText = (response: YandexCreateResult): string => {
   if (response.status === 'failed') {
     const apiError = response.error ?? { code: 'unknown', message: 'no error details' };
     logger.warn(`GPT failed: ${apiError.code} — ${apiError.message}`, { responseId: response.id });
-    // Если провайдер сигнализирует о превышении контекста, используем отдельный код,
-    // чтобы translateChunk мог выполнить сплит батча (а не просто пометить ошибкой).
     const errorCode = isProviderOversizeMessage(apiError.message)
       ? 'context_limit_exceeded'
       : apiError.code;
@@ -106,9 +113,33 @@ const callYandex = async (input: string): Promise<string> => {
   return response.output_text;
 };
 
+const callYandex = async (input: string): Promise<string> =>
+  extractOutputText(
+    await yandexCreate({
+      prompt: { id: YANDEX_PROMPT_ID },
+      input,
+      max_output_tokens: MAX_OUTPUT_TOKENS,
+    }),
+  );
+
+const callAlice = async (input: string): Promise<string> =>
+  extractOutputText(
+    await aliceCreate({
+      model: ALICE_MODEL,
+      instructions: ALICE_INSTRUCTIONS,
+      input,
+      temperature: ALICE_TEMPERATURE,
+      max_output_tokens: MAX_OUTPUT_TOKENS,
+    }),
+  );
+
+// Провайдер выбирается один раз при инициализации модуля на основе YANDEX_AI_PROVIDER.
+const callProvider: (input: string) => Promise<string> =
+  getYandexProvider() === 'alice' ? callAlice : callYandex;
+
 const callWithRetry = async (input: string, attempt = 0): Promise<string> => {
   try {
-    return await callYandex(input);
+    return await callProvider(input);
   } catch (error) {
     const isNonRetryable = error instanceof GptSoftError && !error.retryable;
     const isExhausted = attempt >= MAX_RETRIES - 1;
@@ -167,7 +198,7 @@ const translateChunk = async (batch: BatchInputEntry[], depth = 0): Promise<(str
 };
 
 /**
- * Перевести записи через GPT-агент Yandex Cloud.
+ * Перевести записи через GPT-провайдер (агент или Alice AI LLM).
  * Разбивает на батчи по 50 элементов (или MAX_BATCH_CHARS символов), выполняет последовательно.
  * Возвращает массив строк той же длины (null при ошибке для конкретной позиции).
  */

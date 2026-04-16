@@ -2,6 +2,10 @@ export const YANDEX_BASE_URL = 'https://ai.api.cloud.yandex.net/v1';
 export const YANDEX_FOLDER_ID = 'b1ge1vr81g330igour00';
 export const YANDEX_PROMPT_ID = 'fvt96p8c9pf0412en1is';
 
+// Alice AI LLM (YANDEX_AI_PROVIDER=alice)
+export const ALICE_MODEL = `gpt://${YANDEX_FOLDER_ID}/aliceai-llm/latest`;
+export const ALICE_TEMPERATURE = 0.3;
+
 export const CONTEXT_LIMIT_MESSAGE = 'maximum text generation size';
 export const INPUT_TOKENS_LIMIT_PATTERN =
   /number of input tokens must be no more than \d+, got \d+/i;
