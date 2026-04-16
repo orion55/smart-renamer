@@ -3,10 +3,12 @@ import {
   COLLECTION,
   CYRILLIC,
   EPISODE_MARKER,
+  EPISODE_MARKER_G,
   JUNK_TOKENS,
   LATIN,
   NUMERIC_FILENAME,
   SEASON_MARKER,
+  SEASON_MARKER_GI,
   TRANSLIT_PATTERN,
   YEAR,
 } from '../helpers/patterns';
@@ -21,10 +23,7 @@ export type { GptEntry };
  * оставшуюся часть на «чистую кириллицу».
  */
 const stripSeasonMarkers = (name: string): string =>
-  name
-    .replace(new RegExp(SEASON_MARKER.source, 'gi'), ' ')
-    .replace(new RegExp(EPISODE_MARKER.source, 'g'), ' ')
-    .trim();
+  name.replace(SEASON_MARKER_GI, ' ').replace(EPISODE_MARKER_G, ' ').trim();
 
 /**
  * Проверить, обработан ли уже данный элемент:
@@ -114,19 +113,16 @@ export const buildGptQueue = (
     file.type = classify(file.originalName, 1);
   }
 
-  const foldersForGpt: GptEntry<MediaFolder>[] = folders
-    .filter((folder) => !isAlreadyProcessed(folder.originalName, true))
-    .flatMap((folder) => {
-      const scenario = needsGPT(folder.originalName, true);
-      return scenario !== null ? [{ item: folder, scenario }] : [];
-    });
+  // needsGPT уже вызывает isAlreadyProcessed внутри — внешний .filter избыточен
+  const foldersForGpt: GptEntry<MediaFolder>[] = folders.flatMap((folder) => {
+    const scenario = needsGPT(folder.originalName, true);
+    return scenario !== null ? [{ item: folder, scenario }] : [];
+  });
 
-  const filesForGpt: GptEntry<MediaFile>[] = looseFiles
-    .filter((file) => !isAlreadyProcessed(file.originalName, false))
-    .flatMap((file) => {
-      const scenario = needsGPT(file.originalName, false);
-      return scenario !== null ? [{ item: file, scenario }] : [];
-    });
+  const filesForGpt: GptEntry<MediaFile>[] = looseFiles.flatMap((file) => {
+    const scenario = needsGPT(file.originalName, false);
+    return scenario !== null ? [{ item: file, scenario }] : [];
+  });
 
   logger.info(
     `Classified ${folders.length} folder(s), ${looseFiles.length} loose file(s). ` +

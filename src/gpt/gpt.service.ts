@@ -31,8 +31,11 @@ const client = new OpenAI({
   },
 });
 
+// Yandex использует prompt.id вместо model — параметры не совместимы с типами SDK.
 const yandexCreate = (params: YandexCreateParams): Promise<YandexCreateResult> =>
-  client.responses.create(params as never) as unknown as Promise<YandexCreateResult>;
+  client.responses.create(
+    params as unknown as Parameters<typeof client.responses.create>[0],
+  ) as unknown as Promise<YandexCreateResult>;
 
 const getErrorMeta = (error: unknown) => {
   if (error instanceof GptSoftError) {
@@ -51,13 +54,8 @@ const getErrorMeta = (error: unknown) => {
   return { details: String(error) };
 };
 
-const isContextLimitError = (error: unknown): boolean => {
-  if (error instanceof GptSoftError) {
-    return error.code === 'model_call_error' && isProviderOversizeMessage(error.message);
-  }
-
-  return error instanceof OpenAI.APIError && isProviderOversizeMessage(error.message);
-};
+const isContextLimitError = (error: unknown): boolean =>
+  error instanceof GptSoftError && error.code === 'context_limit_exceeded';
 
 const isProviderOversizeMessage = (message: string): boolean => {
   const normalizedMessage = message.toLowerCase();
@@ -88,11 +86,12 @@ const callYandex = async (input: string): Promise<string> => {
   if (response.status === 'failed') {
     const apiError = response.error ?? { code: 'unknown', message: 'no error details' };
     logger.warn(`GPT failed: ${apiError.code} — ${apiError.message}`, { responseId: response.id });
-    throw new GptSoftError(
-      apiError.message,
-      apiError.code,
-      !NON_RETRYABLE_CODES.has(apiError.code),
-    );
+    // Если провайдер сигнализирует о превышении контекста, используем отдельный код,
+    // чтобы translateChunk мог выполнить сплит батча (а не просто пометить ошибкой).
+    const errorCode = isProviderOversizeMessage(apiError.message)
+      ? 'context_limit_exceeded'
+      : apiError.code;
+    throw new GptSoftError(apiError.message, errorCode, !NON_RETRYABLE_CODES.has(errorCode));
   }
 
   if (response.output_text.length === 0) {
@@ -131,12 +130,11 @@ const callWithRetry = async (input: string, attempt = 0): Promise<string> => {
   }
 };
 
-const getBatchMetrics = (batch: BatchInputEntry[]) => {
+const getBatchMetrics = (batch: BatchInputEntry[], inputStr: string) => {
   const nameLengths = batch.map((entry) => entry.name.length);
-  const inputChars = buildBatchInput(batch).length;
   return {
     batchSize: batch.length,
-    inputChars,
+    inputChars: inputStr.length,
     longestNameChars: nameLengths.length > 0 ? Math.max(...nameLengths) : 0,
     totalNameChars: nameLengths.reduce((sum, length) => sum + length, 0),
   };
@@ -144,7 +142,6 @@ const getBatchMetrics = (batch: BatchInputEntry[]) => {
 
 const translateChunk = async (batch: BatchInputEntry[], depth = 0): Promise<(string | null)[]> => {
   const batchInput = buildBatchInput(batch);
-  const metrics = getBatchMetrics(batch);
 
   logger.info(`GPT batch start (${batch.length})`);
 
@@ -163,6 +160,7 @@ const translateChunk = async (batch: BatchInputEntry[], depth = 0): Promise<(str
       return [...leftResult, ...rightResult];
     }
 
+    const metrics = getBatchMetrics(batch, batchInput);
     logger.error('GPT batch failed', { ...metrics, splitDepth: depth, ...getErrorMeta(error) });
     return new Array<null>(batch.length).fill(null);
   }

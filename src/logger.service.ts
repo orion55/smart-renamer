@@ -48,12 +48,6 @@ const consoleTransport = new transports.Console({
 
 const logger: winston.Logger = createLogger({
   level: 'info',
-  format: format.combine(
-    format.timestamp({ format: 'DD-MM-YYYY HH:mm:ss' }),
-    format.errors({ stack: true }),
-    format.splat(),
-    customFormat,
-  ),
   transports: [fileTransport, consoleTransport],
   exceptionHandlers: [fileTransport, consoleTransport],
   exitOnError: false,

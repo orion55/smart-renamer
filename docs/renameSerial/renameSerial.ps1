@@ -10,7 +10,7 @@ $inDir = "f:\Сериалы"
 
 function getToken() {
 	# https://yandex.cloud/ru/docs/iam/operations/iam-token/create
-    $yandexPassportOauthToken = "y0__xDU_JUUGMHdEyDG5fLwElbKnCiK5zqPtmzAb_UFw6qseyNK"
+    $yandexPassportOauthToken = "YOUR_YANDEX_PASSPORT_OAUTH_TOKEN_HERE"
     $Body = @{ yandexPassportOauthToken = "$yandexPassportOauthToken" } | ConvertTo-Json -Compress
     Try {
         $response = Invoke-RestMethod -Method 'POST' -Uri 'https://iam.api.cloud.yandex.net/iam/v1/tokens' -Body $Body -ContentType 'Application/json'

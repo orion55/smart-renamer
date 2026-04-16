@@ -1,4 +1,4 @@
-import './bootstrap';
+import './bootstrap'; // Загружает переменные окружения из .env (должен быть первым импортом)
 import { buildGptQueue } from './classifier/classifier.service';
 import { applyTranslations } from './gpt/gpt.service';
 import { resolveInDir } from './helpers/env';
@@ -11,6 +11,7 @@ import { summarize } from './stats';
 printSmartRenamer();
 
 void (async () => {
+  const startTime = Date.now();
   logger.info('SmartRenamer started');
 
   const inDir = resolveInDir();
@@ -41,7 +42,7 @@ void (async () => {
 
   // ── GROUP 6: Summary ─────────────────────────────────────────────────────────
 
-  summarize(folders, looseFiles);
+  summarize(folders, looseFiles, startTime);
 
   logger.info('SmartRenamer finished');
 })();

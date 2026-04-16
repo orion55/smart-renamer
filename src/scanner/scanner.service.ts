@@ -175,8 +175,11 @@ export const processFolders = (folders: MediaFolder[]): void => {
     if (folder.files.length === 0) {
       try {
         fs.rmdirSync(folder.path);
-      } catch {
-        // папка не пуста (остались не-видео файлы) — не удаляем
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOTEMPTY') {
+          logger.warn(`Cannot remove folder: ${folder.path}`, { error });
+        }
+        // ENOTEMPTY: остались не-видео файлы — папку не трогаем
       }
       folders.splice(index, 1);
     }

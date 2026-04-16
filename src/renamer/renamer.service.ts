@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { SEASON_MARKER } from '../helpers/patterns';
+import { SEASON_MARKER_GI } from '../helpers/patterns';
 import { logger } from '../logger.service';
 import type { MediaFile, MediaFolder } from '../types';
 import { resolveConflict } from './conflict.resolver';
@@ -24,6 +24,8 @@ import {
 import type { EpisodeInfo, FileInfo } from './renamer.types';
 
 const sanitizePathName = (value: string, fallback: string): string => {
+  // path.basename используется для защиты от path traversal (убирает ведущие компоненты пути).
+  // Оставшиеся последовательности ".." нейтрализуются path.join в вызывающем коде.
   const sanitized = path.basename(
     value
       .split('')
@@ -48,7 +50,7 @@ const sanitizePathName = (value: string, fallback: string): string => {
 
 const normalizeSeriesFolderTitle = (value: string): string =>
   value
-    .replace(new RegExp(SEASON_MARKER.source, 'gi'), ' ')
+    .replace(SEASON_MARKER_GI, ' ')
     .replace(/\(\s*\)/g, ' ')
     .replace(/\[\s*\]/g, ' ')
     .replace(/\s*[._-]\s*$/g, '')
@@ -295,17 +297,17 @@ export const renameMultipartFolder = (folder: MediaFolder, translatedTitle: stri
     fileA.originalName.localeCompare(fileB.originalName),
   );
 
-  sortedFiles.forEach((file, index) => {
+  for (const [index, file] of sortedFiles.entries()) {
     const newBaseName = String(index + 1).padStart(2, '0');
     const targetPath = path.join(folder.path, `${newBaseName}${file.extension}`);
 
-    if (targetPath === file.path) return;
+    if (targetPath === file.path) continue;
 
     resolveConflict(targetPath, file.path);
 
     if (!fs.existsSync(file.path)) {
       file.status = 'skipped';
-      return;
+      continue;
     }
 
     try {
@@ -317,7 +319,7 @@ export const renameMultipartFolder = (folder: MediaFolder, translatedTitle: stri
       logger.error(`Failed to rename part: ${file.path}`, { error });
       file.status = 'error';
     }
-  });
+  }
 
   renameFolder(folder, translatedTitle);
 };
@@ -346,7 +348,7 @@ export const renameAll = (
         liftSingleMovie(folder, title);
         // папка удалена с диска; сбрасываем путь, чтобы не было stale-ссылки
         if (folder.files[0].status === 'processed') {
-          folder.path = '';
+          folder.lifted = true;
         }
       } else {
         renameMultipartFolder(folder, title);

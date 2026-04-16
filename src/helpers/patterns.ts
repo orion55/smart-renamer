@@ -6,10 +6,18 @@ export const EPISODE_MARKER = /[Ss]\d{1,2}[Ee]\d{1,2}|\d{1,2}[xX]\d{2}|[._]\d{2}
 
 /**
  * SEASON_MARKER — маркеры сезона без номера эпизода.
- * Покрывает: S01, .S01., _S01_, (Season 1), (Сезон 1), _1 sezon, Сезон.1
+ * Покрывает: S01, .S01., _S01_, (Season 1), (Сезон 1), _1 sezon, Сезон.1, (1-2.sezoni)
  */
 export const SEASON_MARKER =
-  /[._\s]?[Ss]eason\s*\d{1,2}|[._\s]?[Сс]езон\s*\d{1,2}|[._\s]?\d{1,2}\s*sezon\b|[._\s]?[Ss]\d{1,2}(?![Ee]\d)/i;
+  /[._\s]?[Ss]eason\s*\d{1,2}|[._\s]?[Сс]езон\s*\d{1,2}|[._\s]?\d{1,2}\s*sezon\b|\(\d{1,2}-\d{1,2}\.sezoni?\)|[._\s]?[Ss]\d{1,2}(?![Ee]\d)/i;
+
+/**
+ * Глобальные версии маркеров для использования в String.replace() — ТОЛЬКО для replace().
+ * Не использовать с .test()/.exec() — g-флаг изменяет lastIndex между вызовами.
+ */
+export const SEASON_MARKER_GI =
+  /[._\s]?[Ss]eason\s*\d{1,2}|[._\s]?[Сс]езон\s*\d{1,2}|[._\s]?\d{1,2}\s*sezon\b|\(\d{1,2}-\d{1,2}\.sezoni?\)|[._\s]?[Ss]\d{1,2}(?![Ee]\d)/gi;
+export const EPISODE_MARKER_G = /[Ss]\d{1,2}[Ee]\d{1,2}|\d{1,2}[xX]\d{2}|[._]\d{2}\d{2}[._]/g;
 
 /**
  * YEAR — год в типичных форматах для медиафайлов: (2024), .2024., _2024, 2024-2025

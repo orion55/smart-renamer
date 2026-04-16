@@ -19,6 +19,8 @@ export interface MediaFolder {
   contentType: ContentType;
   files: MediaFile[];
   newName?: string;
+  /** true после liftSingleMovie: файл поднят в IN_DIR, папка удалена, path более не валиден */
+  lifted?: boolean;
 }
 
 export interface ProcessingResult {
@@ -26,4 +28,5 @@ export interface ProcessingResult {
   renamed: number;
   skipped: number;
   errors: number;
+  duration: number;
 }

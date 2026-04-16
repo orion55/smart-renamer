@@ -8,7 +8,8 @@ export interface BatchInputEntry {
 
 /**
  * Сериализовать массив записей в JSON-строку для отправки агенту.
- * Батч ограничен размером из gpt.constants.
+ * Ограничение по количеству (BATCH_SIZE) применяется здесь через slice.
+ * Ограничение по символам (MAX_BATCH_CHARS) применяется вызывающим кодом до вызова этой функции.
  * Агент ожидает массив объектов {type, name} в поле input.
  */
 export const buildBatchInput = (entries: BatchInputEntry[]): string =>
