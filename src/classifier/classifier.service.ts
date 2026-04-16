@@ -21,7 +21,10 @@ export type { GptEntry };
  * оставшуюся часть на «чистую кириллицу».
  */
 const stripSeasonMarkers = (name: string): string =>
-  name.replace(SEASON_MARKER, ' ').replace(EPISODE_MARKER, ' ').trim();
+  name
+    .replace(new RegExp(SEASON_MARKER.source, 'gi'), ' ')
+    .replace(new RegExp(EPISODE_MARKER.source, 'g'), ' ')
+    .trim();
 
 /**
  * Проверить, обработан ли уже данный элемент:
@@ -45,8 +48,8 @@ export const isAlreadyProcessed = (name: string, isFolder: boolean): boolean => 
  * - `'cleanRussian'`  — кириллица, но есть технический мусор
  * - `null`            — GPT не нужен (уже обработано или чистая кириллица)
  */
-export const needsGPT = (name: string): GPTScenario | null => {
-  if (isAlreadyProcessed(name, true) || isAlreadyProcessed(name, false)) {
+export const needsGPT = (name: string, isFolder: boolean): GPTScenario | null => {
+  if (isAlreadyProcessed(name, isFolder)) {
     return null;
   }
 
@@ -58,12 +61,7 @@ export const needsGPT = (name: string): GPTScenario | null => {
     return 'foreign';
   }
 
-  // JUNK_TOKENS использует флаг g — сбрасываем lastIndex перед .test()
-  JUNK_TOKENS.lastIndex = 0;
-  const hasJunk = JUNK_TOKENS.test(name);
-  JUNK_TOKENS.lastIndex = 0;
-
-  if (CYRILLIC.test(name) && hasJunk) {
+  if (CYRILLIC.test(name) && JUNK_TOKENS.test(name)) {
     return 'cleanRussian';
   }
 
@@ -103,7 +101,11 @@ export const classify = (name: string, videoFileCount: number): ContentType => {
 export const buildGptQueue = (
   folders: MediaFolder[],
   looseFiles: MediaFile[],
-): { foldersForGpt: GptEntry<MediaFolder>[]; filesForGpt: GptEntry<MediaFile>[] } => {
+): {
+  foldersForGpt: GptEntry<MediaFolder>[];
+  filesForGpt: GptEntry<MediaFile>[];
+  allForGpt: Array<GptEntry<MediaFolder> | GptEntry<MediaFile>>;
+} => {
   for (const folder of folders) {
     folder.contentType = classify(folder.originalName, folder.files.length);
   }
@@ -115,14 +117,14 @@ export const buildGptQueue = (
   const foldersForGpt: GptEntry<MediaFolder>[] = folders
     .filter((folder) => !isAlreadyProcessed(folder.originalName, true))
     .flatMap((folder) => {
-      const scenario = needsGPT(folder.originalName);
+      const scenario = needsGPT(folder.originalName, true);
       return scenario !== null ? [{ item: folder, scenario }] : [];
     });
 
   const filesForGpt: GptEntry<MediaFile>[] = looseFiles
     .filter((file) => !isAlreadyProcessed(file.originalName, false))
     .flatMap((file) => {
-      const scenario = needsGPT(file.originalName);
+      const scenario = needsGPT(file.originalName, false);
       return scenario !== null ? [{ item: file, scenario }] : [];
     });
 
@@ -131,5 +133,5 @@ export const buildGptQueue = (
       `Items queued for GPT: ${foldersForGpt.length + filesForGpt.length}`,
   );
 
-  return { foldersForGpt, filesForGpt };
+  return { foldersForGpt, filesForGpt, allForGpt: [...foldersForGpt, ...filesForGpt] };
 };

@@ -1,11 +1,8 @@
 import path from 'node:path';
-import * as dotenv from 'dotenv';
 import type winston from 'winston';
 import { createLogger, format, transports } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { ROOT_DIR } from '../appDir';
-
-dotenv.config();
 
 const logDir = process.env.LOG_DIR
   ? path.resolve(process.env.LOG_DIR)

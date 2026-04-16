@@ -9,7 +9,7 @@ export const EPISODE_MARKER = /[Ss]\d{1,2}[Ee]\d{1,2}|\d{1,2}[xX]\d{2}|[._]\d{2}
  * Покрывает: S01, .S01., _S01_, (Season 1), (Сезон 1), _1 sezon, Сезон.1
  */
 export const SEASON_MARKER =
-  /[._\s]?[Ss]eason\s*\d{1,2}|[._\s]?[Сс]езон\s*\d{1,2}|[._\s]?\d{1,2}\s*sezon\b|[._[\s]?[Ss]\d{1,2}(?![Ee]\d)/i;
+  /[._\s]?[Ss]eason\s*\d{1,2}|[._\s]?[Сс]езон\s*\d{1,2}|[._\s]?\d{1,2}\s*sezon\b|[._\s]?[Ss]\d{1,2}(?![Ee]\d)/i;
 
 /**
  * YEAR — год в типичных форматах для медиафайлов: (2024), .2024., _2024, 2024-2025
@@ -22,7 +22,7 @@ export const YEAR = /[._( ]\d{4}[._) ]|\d{4}-\d{4}/;
  * Используется для очистки имён перед отправкой в GPT и для определения сценария.
  */
 export const JUNK_TOKENS =
-  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEB-DL|HDRip|DVDRip|HDTV|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,10}$/gi;
+  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEB-DL|HDRip|DVDRip|HDTV|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,10}$/i;
 
 /**
  * CLEAN_CYRILLIC_FOLDER — папка уже обработана, если содержит только кириллицу,

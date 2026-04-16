@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+import './bootstrap';
 import { buildGptQueue } from './classifier/classifier.service';
 import { applyTranslations } from './gpt/gpt.service';
 import { resolveInDir } from './helpers/env';
@@ -7,8 +7,6 @@ import { logger } from './logger.service';
 import { renameAll } from './renamer/renamer.service';
 import { processFolders, scanDirectory, scanFiles } from './scanner/scanner.service';
 import { summarize } from './stats';
-
-dotenv.config();
 
 printSmartRenamer();
 
@@ -30,11 +28,11 @@ void (async () => {
 
   // ── GROUP 3: Classify ────────────────────────────────────────────────────────
 
-  const { foldersForGpt, filesForGpt } = buildGptQueue(folders, looseFiles);
+  const { allForGpt } = buildGptQueue(folders, looseFiles);
 
   // ── GROUP 4: GPT translation ─────────────────────────────────────────────────
 
-  const translations = await applyTranslations([...foldersForGpt, ...filesForGpt]);
+  const translations = await applyTranslations(allForGpt);
 
   // ── GROUP 5: Rename ──────────────────────────────────────────────────────────
 

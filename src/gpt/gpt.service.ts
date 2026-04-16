@@ -170,7 +170,7 @@ const translateChunk = async (batch: BatchInputEntry[], depth = 0): Promise<(str
 
 /**
  * Перевести записи через GPT-агент Yandex Cloud.
- * Разбивает на батчи по 50, выполняет параллельно (не более 3 одновременно).
+ * Разбивает на батчи по 50 элементов (или MAX_BATCH_CHARS символов), выполняет последовательно.
  * Возвращает массив строк той же длины (null при ошибке для конкретной позиции).
  */
 export const translateBatch = async (entries: TranslateEntry[]): Promise<(string | null)[]> => {

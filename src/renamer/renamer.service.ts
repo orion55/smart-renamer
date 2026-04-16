@@ -10,8 +10,8 @@ import {
   FOUR_DIGIT_PATTERN,
   LEADING_NUMBER_PATTERN,
   RUS_EPISODE_PATTERN,
-  SE_PATTERN,
   SEASON_EPISODE_PATTERN,
+  SE_PATTERN,
   SUFFIX_SEASON_RUS_EPISODE_PATTERN,
   SXE_PATTERN,
   TRAILING_NUMBER_PATTERN,
@@ -24,14 +24,16 @@ import {
 import type { EpisodeInfo, FileInfo } from './renamer.types';
 
 const sanitizePathName = (value: string, fallback: string): string => {
-  const sanitized = value
-    .split('')
-    .map((char) => (char.charCodeAt(0) <= WINDOWS_MAX_CONTROL_CHAR_CODE ? ' ' : char))
-    .join('')
-    .replace(WINDOWS_INVALID_FILE_CHARS_PATTERN, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(WINDOWS_TRAILING_DOTS_AND_SPACES_PATTERN, '');
+  const sanitized = path.basename(
+    value
+      .split('')
+      .map((char) => (char.charCodeAt(0) <= WINDOWS_MAX_CONTROL_CHAR_CODE ? ' ' : char))
+      .join('')
+      .replace(WINDOWS_INVALID_FILE_CHARS_PATTERN, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(WINDOWS_TRAILING_DOTS_AND_SPACES_PATTERN, ''),
+  );
 
   if (!sanitized) {
     return fallback;
@@ -46,7 +48,7 @@ const sanitizePathName = (value: string, fallback: string): string => {
 
 const normalizeSeriesFolderTitle = (value: string): string =>
   value
-    .replace(SEASON_MARKER, ' ')
+    .replace(new RegExp(SEASON_MARKER.source, 'gi'), ' ')
     .replace(/\(\s*\)/g, ' ')
     .replace(/\[\s*\]/g, ' ')
     .replace(/\s*[._-]\s*$/g, '')
@@ -334,8 +336,7 @@ export const renameAll = (
 ): void => {
   for (const folder of folders) {
     const rawTitle = translations.get(folder.path) ?? folder.originalName;
-    const title =
-      folder.contentType === 'series' ? normalizeSeriesFolderTitle(rawTitle) : rawTitle;
+    const title = folder.contentType === 'series' ? normalizeSeriesFolderTitle(rawTitle) : rawTitle;
 
     if (folder.contentType === 'series') {
       renameEpisodeFiles(folder);
@@ -343,6 +344,10 @@ export const renameAll = (
     } else if (folder.contentType === 'movie') {
       if (folder.files.length === 1) {
         liftSingleMovie(folder, title);
+        // папка удалена с диска; сбрасываем путь, чтобы не было stale-ссылки
+        if (folder.files[0].status === 'processed') {
+          folder.path = '';
+        }
       } else {
         renameMultipartFolder(folder, title);
       }
