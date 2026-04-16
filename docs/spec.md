@@ -311,7 +311,6 @@ console.log(response.output_text);
 ### Performance
 - Обработка 100 файлов < 2 минут
 - Батчинг: 50 файлов на запрос GPT
-- Параллельные операции переименования
 
 ### Reliability
 - Graceful degradation при ошибках API
@@ -343,7 +342,7 @@ IN_DIR=                  # Входная директория (например
 
 2. **Batch size** → **50 файлов** на запрос (быстрее и дешевле, чем 20).
 
-3. **Rate limits** → **параллельные запросы с concurrency limit** (например, 3 одновременно) + retry с exponential backoff (R9).
+3. **Rate limits** → retry с exponential backoff (R9).
 
 4. **Детекция `s01BDRip`** → **отдать на откуп GPT**: edge-cases без разделителей не покрывать regex, пусть GPT разбирает.
 

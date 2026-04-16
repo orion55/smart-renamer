@@ -12,7 +12,7 @@
 | `src/helpers/env.ts` | ✅ DONE | `resolveInDir()` — валидация `IN_DIR` из `.env` |
 | `appDir.ts` | ✅ DONE | Экспорт `ROOT_DIR` |
 | `tsconfig.json` | ✅ DONE | Strict CommonJS, ES2020 |
-| `package.json` | ✅ DONE | `openai@^6.34.0`, `p-limit@^4.0.0` установлены |
+| `package.json` | ✅ DONE | `openai@^6.34.0` установлен |
 | `src/types.ts` | ✅ DONE | Все 4 интерфейса + вспомогательные типы (T1) |
 | `src/helpers/patterns.ts` | ✅ DONE | Все 8 паттернов + VIDEO_EXTENSIONS, TRANSLIT_PATTERN, CYRILLIC, LATIN (T2) |
 | `src/scanner/scanner.service.ts` | ✅ DONE | scanDirectory, scanFiles, getVideoFiles, deleteJunkFiles, flattenSubfolders, processFolders (T3) |
@@ -60,7 +60,6 @@ T0 (deps + .env)
 
 Установлено:
 - `openai@^6.34.0` — OpenAI SDK как клиент Yandex Cloud (`baseURL` override)
-- `p-limit@^4.0.0` — контроль конкурентности (⚠️ v5+ ESM-only, несовместим с `commonjs`)
 
 **Зависит от**: ничего
 
@@ -280,7 +279,6 @@ const translateBatch = (entries: GptEntry[]): Promise<string[]>
 const callWithRetry = (input: string, attempt: number): Promise<string>
 ```
 
-- Конкурентность: `p-limit(3)` — максимум 3 параллельных запроса
 - Retry: exponential backoff 1 с / 2 с / 4 с, максимум 3 попытки
 - После исчерпания попыток: логировать ошибку, вернуть массив `null` нужной длины, продолжить
 
@@ -360,7 +358,7 @@ const callWithRetry = (input: string, attempt: number): Promise<string>
 9. Для требующих GPT:
    - Определить сценарий (foreign / translit / cleanRussian)
    - Сгруппировать в батчи по 50 по сценарию
-   - gptService.translateBatch() с p-limit(3)
+   - gptService.translateBatch()
 10. Применить переименования:
     a. liftSingleMovie или renameMultipartFolder (фильмы по содержимому)
     b. renameEpisodeFiles (серии)
@@ -434,7 +432,6 @@ class StatsTracker {
 
 | # | Риск | Серьёзность |
 |---|---|---|
-| R1 | `p-limit` v5+ ESM-only — нужен `p-limit@^4` | Высокая |
 | R2 | `openai` SDK: проверить поддержку `responses.create` vs `chat.completions.create` | Средняя |
 | R3 | Windows-пути с кириллицей (`f:\Сериалы`) — использовать `node:path` | Средняя |
 | R4 | Переименование папки пока её содержимое обрабатывается — папка переименовывается последней | Средняя |
