@@ -2,12 +2,7 @@ import colors from 'ansi-colors';
 import { logger } from './logger.service';
 import type { MediaFile, MediaFolder, ProcessingResult } from './types';
 
-const startTime = Date.now();
-
-const collectStats = (
-  folders: MediaFolder[],
-  looseFiles: MediaFile[],
-): ProcessingResult => {
+const collectStats = (folders: MediaFolder[], looseFiles: MediaFile[]): ProcessingResult => {
   const allFiles = [...looseFiles, ...folders.flatMap((folder) => folder.files)];
   let renamed = 0;
   let skipped = 0;
@@ -17,12 +12,11 @@ const collectStats = (
     else if (file.status === 'skipped') skipped++;
     else if (file.status === 'error') errors++;
   }
-  return { total: allFiles.length, renamed, skipped, errors, duration: Date.now() - startTime };
+  return { total: allFiles.length, renamed, skipped, errors };
 };
 
 const printSummary = (result: ProcessingResult): void => {
   const line = '─'.repeat(44);
-  const durationSec = (result.duration / 1000).toFixed(1);
   console.log(`\n${colors.cyan(line)}`);
   console.log(colors.bold.white('  SmartRenamer Summary'));
   console.log(colors.cyan(line));
@@ -32,17 +26,13 @@ const printSummary = (result: ProcessingResult): void => {
   console.log(
     `  Errors:     ${result.errors > 0 ? colors.red(String(result.errors)) : colors.white('0')}`,
   );
-  console.log(`  Duration:   ${colors.white(`${durationSec}s`)}`);
   console.log(`${colors.cyan(line)}\n`);
   logger.info(
     `Summary: total=${result.total} renamed=${result.renamed} ` +
-      `skipped=${result.skipped} errors=${result.errors} duration=${durationSec}s`,
+      `skipped=${result.skipped} errors=${result.errors}`,
   );
 };
 
-export const summarize = (
-  folders: MediaFolder[],
-  looseFiles: MediaFile[],
-): void => {
+export const summarize = (folders: MediaFolder[], looseFiles: MediaFile[]): void => {
   printSummary(collectStats(folders, looseFiles));
 };
