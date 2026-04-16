@@ -11,7 +11,6 @@ import { summarize } from './stats';
 printSmartRenamer();
 
 void (async () => {
-  const startTime = Date.now();
   logger.info('SmartRenamer started');
 
   const inDir = resolveInDir();
@@ -42,7 +41,7 @@ void (async () => {
 
   // ── GROUP 6: Summary ─────────────────────────────────────────────────────────
 
-  summarize(folders, looseFiles, startTime);
+  summarize(folders, looseFiles);
 
   logger.info('SmartRenamer finished');
 })();
