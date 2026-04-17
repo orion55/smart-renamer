@@ -14,7 +14,7 @@
 
 | Действие | Путь | Ответственность |
 |---|---|---|
-| Modify | `src/helpers/patterns.ts` | Добавить `JUNK_TOKENS_G` и `YEAR_G` (глобальные варианты для replace) |
+| Modify | `src/helpers/patterns.ts` | Расширить `JUNK_TOKENS` (+ WEB-DLRip), добавить `JUNK_TOKENS_G` и `YEAR_G` |
 | Create | `src/helpers/cleanup.ts` | `cleanFallbackName` и `applyFallbackCleanup` |
 | Modify | `src/gpt/gpt.service.ts:240` | Поменять возвращаемый тип `applyTranslations` на `Map<string, string>` |
 | Modify | `src/gpt/gpt.types.ts:63-64` | Удалить неиспользуемый `TranslationMap` |
@@ -22,16 +22,25 @@
 
 ---
 
-## Task 1: Добавить глобальные паттерны JUNK_TOKENS_G и YEAR_G
+## Task 1: Расширить JUNK_TOKENS и добавить глобальные паттерны JUNK_TOKENS_G / YEAR_G
 
 **Files:**
 - Modify: `src/helpers/patterns.ts`
 
 Глобальные варианты нужны исключительно для `String.replace()` — никогда не использовать с `.test()` / `.exec()` (g-флаг меняет `lastIndex`).
 
-- [ ] **Step 1: Добавить JUNK_TOKENS_G сразу после JUNK_TOKENS**
+- [ ] **Step 1: Расширить JUNK_TOKENS — добавить WEB-DLRip**
 
-В `src/helpers/patterns.ts` после блока `JUNK_TOKENS` добавить:
+В `src/helpers/patterns.ts` в списке `JUNK_TOKENS` добавить `WEB-DLRip` после `WEB-DL`:
+
+```typescript
+export const JUNK_TOKENS =
+  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEB-DLRip|WEB-DL|HDRip|DVDRip|HDTV|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,10}$/i;
+```
+
+- [ ] **Step 2: Добавить JUNK_TOKENS_G сразу после JUNK_TOKENS**
+
+В `src/helpers/patterns.ts` после блока `JUNK_TOKENS` добавить (с тем же расширенным списком):
 
 ```typescript
 /**
@@ -39,10 +48,10 @@
  * Не использовать с .test()/.exec() — g-флаг изменяет lastIndex между вызовами.
  */
 export const JUNK_TOKENS_G =
-  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEB-DL|HDRip|DVDRip|HDTV|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,10}$/gi;
+  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEB-DLRip|WEB-DL|HDRip|DVDRip|HDTV|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,10}$/gi;
 ```
 
-- [ ] **Step 2: Добавить YEAR_G сразу после YEAR**
+- [ ] **Step 3: Добавить YEAR_G сразу после YEAR**
 
 ```typescript
 /**
@@ -52,7 +61,7 @@ export const JUNK_TOKENS_G =
 export const YEAR_G = /[._( ]\d{4}[._) ]|\d{4}-\d{4}/g;
 ```
 
-- [ ] **Step 3: Проверить lint**
+- [ ] **Step 4: Проверить lint**
 
 ```bash
 npm run check
@@ -60,11 +69,11 @@ npm run check
 
 Ожидаемый вывод: `Checked N file(s) in Xms — no errors`
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add src/helpers/patterns.ts
-git commit -m "feat: добавить JUNK_TOKENS_G и YEAR_G для replace()"
+git commit -m "feat: добавить WEB-DLRip в JUNK_TOKENS, добавить JUNK_TOKENS_G и YEAR_G"
 ```
 
 ---
@@ -76,23 +85,24 @@ git commit -m "feat: добавить JUNK_TOKENS_G и YEAR_G для replace()"
 
 ### Алгоритм cleanFallbackName (порядок важен)
 
-1. `JUNK_TOKENS_G` → `' '` — убрать кодеки, разрешение, release-группу в конце
-2. `YEAR_G` → `' '` — убрать годы, включая диапазоны
-3. `/[._]+/g` → `' '` — заменить разделители-точки/подчёркивания на пробел
-4. `/\s{2,}/g` → `' '` — схлопнуть множественные пробелы
-5. `.trim()` — убрать граничные пробелы
-6. `/^[-–\s]+/` → `''` — убрать ведущие дефисы
-7. `/[-–\s]+$/` → `''` — убрать завершающие дефисы
+1. `/_?\[[^\]]+\]/g` → `' '` — убрать release-группы в квадратных скобках: `_[teko]`, `[rarbg]`
+2. `JUNK_TOKENS_G` → `' '` — убрать кодеки, разрешение, release-группу в конце (`-LOL`)
+3. `YEAR_G` → `' '` — убрать годы, включая диапазоны
+4. `/[._]+/g` → `' '` — заменить разделители-точки/подчёркивания на пробел
+5. `/\s{2,}/g` → `' '` — схлопнуть множественные пробелы
+6. `.trim()` — убрать граничные пробелы
+7. `/^[-–\s]+/` → `''` — убрать ведущие дефисы
+8. `/[-–\s]+$/` → `''` — убрать завершающие дефисы
 
 ### Трассировка примеров (ручная проверка)
 
-| Вход | После JUNK_TOKENS_G | После YEAR_G | После [._] | Результат |
-|---|---|---|---|---|
-| `Breaking.Bad.S01.1080p.BluRay.x264-SiNNERS` | `Breaking.Bad.S01. . . ` | без изм. | `Breaking Bad S01` | `Breaking Bad S01` |
-| `Слово пацана 1080p WEB-DL x265 Кровь на асфальте` | `Слово пацана    Кровь на асфальте` | без изм. | без изм. | `Слово пацана Кровь на асфальте` |
-| `Sherlock.2010.S01E01.720p.BluRay` | `Sherlock.2010.S01E01. . ` | `Sherlock S01E01. . ` | `Sherlock S01E01` | `Sherlock S01E01` |
-| `Naruto.2002-2007.HEVC` | `Naruto.2002-2007. ` | `Naruto.. ` | `Naruto` | `Naruto` |
-| `Во все тяжкие` | без изм. | без изм. | без изм. | `Во все тяжкие` |
+| Вход | После `[...]` | После JUNK_TOKENS_G | После YEAR_G | После `[._]` | Результат |
+|---|---|---|---|---|---|
+| `Aranyelet.2015-2018.web-dlrip_[teko]` | `Aranyelet.2015-2018.web-dlrip ` | `Aranyelet.2015-2018. ` | `Aranyelet.. ` | `Aranyelet` | `Aranyelet` |
+| `Breaking.Bad.S01.1080p.BluRay.x264-SiNNERS` | без изм. | `Breaking.Bad.S01. . . ` | без изм. | `Breaking Bad S01` | `Breaking Bad S01` |
+| `Слово пацана 1080p WEB-DL x265 Кровь на асфальте` | без изм. | `Слово пацана    Кровь на асфальте` | без изм. | без изм. | `Слово пацана Кровь на асфальте` |
+| `Sherlock.2010.S01E01.720p.BluRay` | без изм. | `Sherlock.2010.S01E01. . ` | `Sherlock S01E01. . ` | `Sherlock S01E01` | `Sherlock S01E01` |
+| `Во все тяжкие` | без изм. | без изм. | без изм. | без изм. | `Во все тяжкие` |
 
 - [ ] **Step 1: Создать файл**
 
@@ -103,6 +113,7 @@ import { JUNK_TOKENS_G, YEAR_G } from './patterns';
 
 export const cleanFallbackName = (name: string): string =>
   name
+    .replace(/_?\[[^\]]+\]/g, ' ')
     .replace(JUNK_TOKENS_G, ' ')
     .replace(YEAR_G, ' ')
     .replace(/[._]+/g, ' ')
