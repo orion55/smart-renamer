@@ -1,8 +1,9 @@
+import type { FallbackEntry } from '../types';
 import { JUNK_TOKENS_G, YEAR_G } from './patterns';
 
 export const cleanFallbackName = (name: string): string =>
   name
-    .replace(/_?\[[^\]]+\]/g, ' ')
+    .replace(/_?\[[^\]]+]/g, ' ')
     .replace(JUNK_TOKENS_G, ' ')
     .replace(YEAR_G, ' ')
     .replace(/[._]+/g, ' ')
@@ -10,8 +11,6 @@ export const cleanFallbackName = (name: string): string =>
     .trim()
     .replace(/^[-–\s]+/, '')
     .replace(/[-–\s]+$/, '');
-
-type FallbackEntry = { item: { originalName: string; path: string } };
 
 export const applyFallbackCleanup = (
   entries: FallbackEntry[],

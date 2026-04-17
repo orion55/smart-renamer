@@ -29,3 +29,5 @@ export interface ProcessingResult {
   skipped: number;
   errors: number;
 }
+
+export type FallbackEntry = { item: { originalName: string; path: string } };
