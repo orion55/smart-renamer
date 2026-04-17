@@ -7,6 +7,8 @@ import { logger } from '../logger.service';
  */
 export const resolveConflict = (targetPath: string, sourcePath: string): void => {
   if (targetPath === sourcePath) return;
+  // На Windows регистронезависимые пути — не конфликт, а переименование регистра.
+  if (targetPath.toLowerCase() === sourcePath.toLowerCase()) return;
   if (!fs.existsSync(targetPath)) return;
 
   try {

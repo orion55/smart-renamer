@@ -210,7 +210,10 @@ export const renameFolder = (folder: MediaFolder, translatedTitle: string): void
 
   if (targetPath === folder.path) return;
 
-  if (fs.existsSync(targetPath)) {
+  // На Windows пути регистронезависимы: dolmen → Dolmen — это допустимое переименование,
+  // но fs.existsSync вернёт true для той же папки с другим регистром.
+  const isCaseOnlyRename = targetPath.toLowerCase() === folder.path.toLowerCase();
+  if (!isCaseOnlyRename && fs.existsSync(targetPath)) {
     logger.warn(`Cannot rename folder — target already exists: ${targetPath}`);
     return;
   }
