@@ -20,7 +20,6 @@ import type {
   AliceCreateParams,
   MediaGptEntry,
   TranslateEntry,
-  TranslationMap,
   YandexCreateParams,
   YandexCreateResult,
 } from './gpt.types';
@@ -237,7 +236,9 @@ export const translateBatch = async (entries: TranslateEntry[]): Promise<(string
  * Возвращает Map<path → translatedName> только для успешно переведённых элементов.
  * Оригинальные объекты не изменяются — поток данных явный и без side-effects.
  */
-export const applyTranslations = async (allEntries: MediaGptEntry[]): Promise<TranslationMap> => {
+export const applyTranslations = async (
+  allEntries: MediaGptEntry[],
+): Promise<Map<string, string>> => {
   const results = await translateBatch(allEntries);
   const translations = new Map<string, string>();
   for (const [entryIndex, entry] of allEntries.entries()) {

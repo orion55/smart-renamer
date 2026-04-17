@@ -58,6 +58,3 @@ export interface TranslateEntry {
 
 /** Объединение всех возможных GPT-очередей из classifier. */
 export type MediaGptEntry = GptEntry<MediaFolder | MediaFile>;
-
-/** Результат applyTranslations: path → переведённое название. */
-export type TranslationMap = ReadonlyMap<string, string>;

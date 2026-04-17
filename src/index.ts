@@ -1,6 +1,7 @@
 import './bootstrap'; // Загружает переменные окружения из .env (должен быть первым импортом)
 import { buildGptQueue } from './classifier/classifier.service';
 import { applyTranslations } from './gpt/gpt.service';
+import { applyFallbackCleanup } from './helpers/cleanup';
 import { isYandexEnabled, resolveInDir } from './helpers/env';
 import { printSmartRenamer } from './helpers/greeting';
 import { logger } from './logger.service';
@@ -34,7 +35,10 @@ void (async () => {
 
   const yandexEnabled = isYandexEnabled();
   if (!yandexEnabled) logger.info('Yandex AI disabled (YANDEX_AI_ENABLED=false) — skipping GPT');
-  const translations = yandexEnabled ? await applyTranslations(allForGpt) : new Map();
+  const translations = yandexEnabled
+    ? await applyTranslations(allForGpt)
+    : new Map<string, string>();
+  applyFallbackCleanup(allForGpt, translations);
 
   // ── GROUP 5: Rename ──────────────────────────────────────────────────────────
 
