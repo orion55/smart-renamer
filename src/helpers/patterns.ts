@@ -51,14 +51,14 @@ export const JUNK_TOKENS_G =
  * Используется в cleanFallbackName (режим YANDEX_AI_ENABLED=false).
  */
 export const RELEASE_GROUPS_G =
-  /\b(?:ViruseProject|HDRezka(?:\s+Studio)?|ExKinoRay|LostFilm|NewStudio|New-Team|HamsterStudio|To4kaTV|TVShows|msltel|AKTEP|Files-x|rudub|lep|il68k)\b/gi;
+  /\b(?:ViruseProject|HDRezka(?:\s+Studio)?|ExKinoRay|LostFilm|NewStudio|New-Team|HamsterStudio|To4kaTV|TVShows|HDCLUB|AlexFilm|AB-Video|msltel|AKTEP|Files-x|rudub|lep|il68k|Paravozik|Кравец)\b/gi;
 
 /**
  * LANG_TOKENS_G — коды языков ISO 639, их полные названия и маркеры аудио/субтитров.
  * Используется в cleanFallbackName (режим YANDEX_AI_ENABLED=false).
  */
 export const LANG_TOKENS_G =
-  /\b(?:Russian|English|French|German|Spanish|Portuguese|Italian|Polish|Chinese|Japanese|Korean|Arabic|Turkish|Dutch|Swedish|Norwegian|Danish|Finnish|Hebrew|Czech|Hungarian|Romanian|Ukrainian|Rus|Eng|Fre|Ger|Spa|Por|Ita|Pol|Chi|Jpn|Kor|Ara|Tur|Dut|Swe|Nor|Dan|Fin|Heb|Cze|Hun|Ron|Ukr|MVO|SDH|sub|Original)\b/gi;
+  /\b(?:\d+x(?:Russian|English|French|German|Spanish|Portuguese|Italian|Polish|Chinese|Japanese|Korean|Arabic|Turkish|Dutch|Swedish|Norwegian|Danish|Finnish|Hebrew|Czech|Hungarian|Romanian|Ukrainian|Rus|Eng|Fre|Ger|Spa|Por|Ita|Pol|Chi|Jpn|Kor|Ara|Tur|Dut|Swe|Nor|Dan|Fin|Heb|Cze|Hun|Ron|Ukr)|Russian|English|French|German|Spanish|Portuguese|Italian|Polish|Chinese|Japanese|Korean|Arabic|Turkish|Dutch|Swedish|Norwegian|Danish|Finnish|Hebrew|Czech|Hungarian|Romanian|Ukrainian|Rus|Eng|Fre|Ger|Spa|Por|Ita|Pol|Chi|Jpn|Kor|Ara|Tur|Dut|Swe|Nor|Dan|Fin|Heb|Cze|Hun|Ron|Ukr|MVO|SDH|sub|Original)\b/gi;
 
 /**
  * PLATFORM_CODES_G — коды VOD-платформ (строго uppercase, без флага i).

@@ -11,7 +11,7 @@ import {
 export const cleanFallbackName = (name: string): string =>
   name
     .replace(/\([^)]+\)/g, ' ') // убрать (скобочный мусор): студии, актёры, коды вещателей
-    .replace(/_?\[[^\]\)]+[\]\)]/g, ' ') // убрать [теги] и [мусор)
+    .replace(/_?\[[^\])]+[\])]/g, ' ') // убрать [теги] и [мусор)
     .replace(BY_ENCODER_G, ' ') // убрать «by AKTEP», «от New-Team»
     .replace(PLATFORM_CODES_G, ' ') // убрать AMZN, NF, LE, TVHUB…
     .replace(LANG_TOKENS_G, ' ') // убрать Rus, Eng, Fre, MVO, sub, Original…
