@@ -26,11 +26,24 @@ export const EPISODE_MARKER_G = /[Ss]\d{1,2}[Ee]\d{1,2}|\d{1,2}[xX]\d{2}|[._]\d{
 export const YEAR = /[._( ]\d{4}[._) ]|\d{4}-\d{4}/;
 
 /**
+ * YEAR_G — глобальная версия для String.replace().
+ * Не использовать с .test()/.exec() — g-флаг изменяет lastIndex между вызовами.
+ */
+export const YEAR_G = /[._( ]\d{4}[._) ]|\d{4}-\d{4}/g;
+
+/**
  * JUNK_TOKENS — технический мусор: разрешение, кодек, рипер, релиз-группы.
  * Используется для очистки имён перед отправкой в GPT и для определения сценария.
  */
 export const JUNK_TOKENS =
-  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEB-DL|HDRip|DVDRip|HDTV|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,10}$/i;
+  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,15}$/i;
+
+/**
+ * JUNK_TOKENS_G — глобальная версия для String.replace().
+ * Не использовать с .test()/.exec() — g-флаг изменяет lastIndex между вызовами.
+ */
+export const JUNK_TOKENS_G =
+  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,15}$/gi;
 
 /**
  * CLEAN_CYRILLIC_FOLDER — папка уже обработана, если содержит только кириллицу,
