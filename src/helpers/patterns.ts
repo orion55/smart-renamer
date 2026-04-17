@@ -37,14 +37,14 @@ export const YEAR_G = /[._( ]\d{4}[._) ]|\d{4}-\d{4}/g;
  * \d{3,4}p покрывает все разрешения: 360p, 480p, 576p, 720p, 1080p, 2160p, 400p и т.д.
  */
 export const JUNK_TOKENS =
-  /\b(?:\d{3,4}p|4[Kk]|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit|WEB|FILM)\b|-[A-Z0-9]{2,15}$/i;
+  /\b(?:\d{3,4}p|4[Kk]|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,15}$/i;
 
 /**
  * JUNK_TOKENS_G — глобальная версия для String.replace().
  * Не использовать с .test()/.exec() — g-флаг изменяет lastIndex между вызовами.
  */
 export const JUNK_TOKENS_G =
-  /\b(?:\d{3,4}p|4[Kk]|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit|WEB|FILM)\b|-[A-Z0-9]{2,15}$/gi;
+  /\b(?:\d{3,4}p|4[Kk]|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,15}$/gi;
 
 /**
  * RELEASE_GROUPS_G — известные рипперы, студии дубляжа и энкодеры.
