@@ -13,7 +13,8 @@
     "format": "biome format --write ./src",
     "check": "biome check --write ./src",
     "reset-data-01": "rimraf data && copyfiles -u 1 \"data01/**/*\" data",
-    "reset-data-02": "rimraf data && copyfiles -u 1 \"data02/**/*\" data"
+    "reset-data-02": "rimraf data && copyfiles -u 1 \"data02/**/*\" data",
+    "reset-data-03": "rimraf data && copyfiles -u 1 \"data03/**/*\" data"
   },
   "keywords": [],
   "author": "",
