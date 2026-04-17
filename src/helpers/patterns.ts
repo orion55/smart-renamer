@@ -34,16 +34,44 @@ export const YEAR_G = /[._( ]\d{4}[._) ]|\d{4}-\d{4}/g;
 /**
  * JUNK_TOKENS — технический мусор: разрешение, кодек, рипер, релиз-группы.
  * Используется для очистки имён перед отправкой в GPT и для определения сценария.
+ * \d{3,4}p покрывает все разрешения: 360p, 480p, 576p, 720p, 1080p, 2160p, 400p и т.д.
  */
 export const JUNK_TOKENS =
-  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,15}$/i;
+  /\b(?:\d{3,4}p|4[Kk]|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit|WEB|FILM)\b|-[A-Z0-9]{2,15}$/i;
 
 /**
  * JUNK_TOKENS_G — глобальная версия для String.replace().
  * Не использовать с .test()/.exec() — g-флаг изменяет lastIndex между вызовами.
  */
 export const JUNK_TOKENS_G =
-  /\b(?:720p|1080p|2160p|4[Kk]|480p|360p|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit)\b|-[A-Z0-9]{2,15}$/gi;
+  /\b(?:\d{3,4}p|4[Kk]|BDRip|BluRay|Blu-Ray|WEBRip|WEBDLRip|WEB-DLRip|WEBDL|WEB-DL|HDRip|DVDRip|DVB|HDTV|XviD|x264|x265|H\.?264|H\.?265|AVC|HEVC|AAC|AC3|DTS|MP3|FLAC|HDR|SDR|10bit|WEB|FILM)\b|-[A-Z0-9]{2,15}$/gi;
+
+/**
+ * RELEASE_GROUPS_G — известные рипперы, студии дубляжа и энкодеры.
+ * Используется в cleanFallbackName (режим YANDEX_AI_ENABLED=false).
+ */
+export const RELEASE_GROUPS_G =
+  /\b(?:ViruseProject|HDRezka(?:\s+Studio)?|ExKinoRay|LostFilm|NewStudio|New-Team|HamsterStudio|To4kaTV|TVShows|msltel|AKTEP|Files-x|rudub|lep|il68k)\b/gi;
+
+/**
+ * LANG_TOKENS_G — коды языков ISO 639, их полные названия и маркеры аудио/субтитров.
+ * Используется в cleanFallbackName (режим YANDEX_AI_ENABLED=false).
+ */
+export const LANG_TOKENS_G =
+  /\b(?:Russian|English|French|German|Spanish|Portuguese|Italian|Polish|Chinese|Japanese|Korean|Arabic|Turkish|Dutch|Swedish|Norwegian|Danish|Finnish|Hebrew|Czech|Hungarian|Romanian|Ukrainian|Rus|Eng|Fre|Ger|Spa|Por|Ita|Pol|Chi|Jpn|Kor|Ara|Tur|Dut|Swe|Nor|Dan|Fin|Heb|Cze|Hun|Ron|Ukr|MVO|SDH|sub|Original)\b/gi;
+
+/**
+ * PLATFORM_CODES_G — коды VOD-платформ (строго uppercase, без флага i).
+ * Используется в cleanFallbackName (режим YANDEX_AI_ENABLED=false).
+ * Примеры: AMZN=Amazon, NF=Netflix, PCOK=Peacock, LE=Limited Edition.
+ */
+export const PLATFORM_CODES_G = /\b(?:AMZN|NF|PCOK|TVHUB|HULU|DSNP|ATVP|STAN|PMTP|LE)\b/g;
+
+/**
+ * BY_ENCODER_G — атрибуция «by <тег>» и «от <тег>» в конце имени файла.
+ * Используется в cleanFallbackName (режим YANDEX_AI_ENABLED=false).
+ */
+export const BY_ENCODER_G = /\b(?:by|от)\s+\S+/gi;
 
 /**
  * CLEAN_CYRILLIC_FOLDER — папка уже обработана, если содержит только кириллицу,
